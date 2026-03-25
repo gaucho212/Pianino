@@ -15,7 +15,7 @@ int main() {
         Shader myShader("shader.vert", "shader.frag");
 
         // 3. Ładowanie modelu 3D 
-        Model myModel("PianoModel.FBX"); 
+        Model myModel("Piano.obj"); 
 
         // 4. Konfiguracja matryc 
         glm::mat4 V = glm::lookAt(
@@ -48,8 +48,8 @@ int main() {
             glm::mat4 M = glm::mat4(1.0f);
             M = glm::translate(M, glm::vec3(0.0f, -1.0f, 0.0f)); // Przesuwamy lekko w dół
             M = glm::rotate(M, rotationAngle, glm::vec3(0.0f, 1.0f, 0.0f)); // Obracamy wokół osi Y
-            M = glm::rotate(M, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // Obrót spowodowany formatem .fbx
-            M = glm::scale(M, glm::vec3(0.05f)); // Odkomentuj i dostosuj, jeśli wczytany model jest za duży
+            M = glm::rotate(M, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // Obrót spowodowany formatem róznica obrotu w OpenGL a .obj
+            M = glm::scale(M, glm::vec3(0.02f)); 
 
             // Przesłanie macierzy do shadera
             myShader.setMat4("M", M);
