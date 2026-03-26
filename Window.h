@@ -71,6 +71,11 @@ public:
     Window &operator=(const Window &) = delete;
 
     // Metody pomocnicze do pętli głównej
+
+    bool isKeyPressed(int key) const {
+        return glfwGetKey(windowHandle, key) == GLFW_PRESS;
+    }
+    
     bool shouldClose() const
     {
         return glfwWindowShouldClose(windowHandle);
