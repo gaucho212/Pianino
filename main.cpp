@@ -23,8 +23,6 @@ int main()
         // Mówimy shaderowi, że zmienna "tex" używa slotu numer 0
         myShader.use();
 
-        
-
         // Zmienne kamery
         glm::vec3 cameraPos = glm::vec3(0.0f, 2.0f, 5.0f);     // Gdzie stoimy
         glm::vec3 cameraFront = glm::vec3(0.0f, -0.3f, -1.0f); // Gdzie patrzymy (lekko w dół i w głąb ekranu)
@@ -37,10 +35,9 @@ int main()
 
         float yaw = -90.0f; // Yaw ustawiamy na -90.0, aby na starcie kamera patrzyła w stronę ujemnej osi Z
         float pitch = 0.0f; // Na starcie patrzymy prosto przed siebie
-        
-        double lastX = 400.0, lastY = 300.0; // Środek okna (zakładając 800x600)
-        bool firstMouse = true; // Flaga, żeby kamera nie "skoczyła" przy pierwszym ruchu
 
+        double lastX = 400.0, lastY = 300.0; // Środek okna (zakładając 800x600)
+        bool firstMouse = true;              // Flaga, żeby kamera nie "skoczyła" przy pierwszym ruchu
 
         // Zmienne obrotu
         float angleX = 0.0f;
@@ -50,6 +47,13 @@ int main()
 
         // Zmienna przechowująca nasz Field of View (domyślnie 45 stopni)
         float fov = 45.0f;
+
+        // --- ZMIENNE DO ANIMACJI KLAPY PIANINA ---
+        bool isPianoOpen = false;     // Stan: otwarte/zamknięte
+        float currentLidAngle = 0.0f; // Aktualny kąt otwarcia
+        float maxLidAngle = 55.0f;    // Maksymalny kąt otwarcia w stopniach
+        float lidSpeed = 80.0f;       // Prędkość otwierania (stopnie na sekundę)
+        bool oKeyPressed = false;     // Blokada (żeby klawisz nie "migał")
 
         // Obliczanie fps
         float time_second = 0.0f;
@@ -82,7 +86,8 @@ int main()
             double mouseX, mouseY;
             window.getCursorPos(mouseX, mouseY);
 
-            if (firstMouse) {
+            if (firstMouse)
+            {
                 // W pierwszej klatce po prostu synchronizujemy stare pozycje z nowymi
                 lastX = mouseX;
                 lastY = mouseY;
@@ -98,7 +103,7 @@ int main()
             xoffset *= sensitivity;
             yoffset *= sensitivity;
 
-            yaw   += xoffset;
+            yaw += xoffset;
             pitch += yoffset;
 
             // Zabezpieczenie przed "złamaniem karku" - nie pozwalamy spojrzeć wyżej niż pionowo w górę i dół
@@ -125,7 +130,6 @@ int main()
             if (window.isKeyPressed(GLFW_KEY_DOWN))
                 angleY -= rotationSpeed * deltaTime;
 
-
             // Obliczamy "płaski" wektor patrzenia (tylko na osiach X i Z)
             glm::vec3 cameraFrontFlat = glm::normalize(glm::vec3(cameraFront.x, 0.0f, cameraFront.z));
             float currentSpeed = cameraSpeed * deltaTime;
@@ -145,18 +149,22 @@ int main()
             float zoomSpeed = 30.0f * deltaTime; // Szybkość zoomowania (stopnie na sekundę)
 
             // Z - Przybliżanie (zmniejszamy kąt widzenia FOV)
-            if (window.isKeyPressed(GLFW_KEY_Z)) {
-                fov -= zoomSpeed; 
+            if (window.isKeyPressed(GLFW_KEY_Z))
+            {
+                fov -= zoomSpeed;
             }
             // X - Oddalanie (zwiększamy kąt widzenia FOV)
-            if (window.isKeyPressed(GLFW_KEY_X)) {
-                fov += zoomSpeed; 
+            if (window.isKeyPressed(GLFW_KEY_X))
+            {
+                fov += zoomSpeed;
             }
 
-            // Zabezpieczenia: nie pozwalamy odwrócić ekranu na lewą stronę (FOV < 1) 
+            // Zabezpieczenia: nie pozwalamy odwrócić ekranu na lewą stronę (FOV < 1)
             // i nie pozwalamy na zbyt duże zniekształcenie "rybie oko" (FOV > 45)
-            if (fov < 1.0f)  fov = 1.0f;
-            if (fov > 45.0f) fov = 45.0f;
+            if (fov < 1.0f)
+                fov = 1.0f;
+            if (fov > 45.0f)
+                fov = 45.0f;
 
             // OBLICZAMY NOWĄ MACIERZ PROJEKCJI CO KLATKĘ
             glm::mat4 P = glm::perspective(glm::radians(fov), 800.0f / 600.0f, 0.1f, 100.0f);
@@ -173,7 +181,6 @@ int main()
             // lookAt bierze: pozycję kamery, punkt w który patrzymy (pozycja + kierunek), oraz górę
             glm::mat4 V = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
-            
             // Kolor obiektu wczytana grafika
             // myShader.setVec3("objectColor", glm::vec3(0.25f, 0.15f, 0.08f));
 
@@ -195,14 +202,103 @@ int main()
             M = glm::rotate(M, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
             M = glm::scale(M, glm::vec3(0.01f)); // Skalowanie ze wzgledu na duzy plik .obj
 
+            // Obsluga klawiszy pianina
+
+            // --- ANIMACJA KLAWISZY (ŚRODEK PIANINA) ---
+            std::unordered_map<std::string, glm::mat4> localTransforms;
+
+            // Głębokość wciśnięcia klawisza.
+            // UWAGA: Jeśli klawisze znikają całkowicie lub ledwo drgają, zmień tę wartość! (np. na -0.05f lub -2.0f)
+            float keyPressDepth = -0.5f;
+
+            // Jeśli klawisz jest wciśnięty, tworzymy macierz przesunięcia w dół na osi -X przez lokalny obór -90 stopni
+            if (window.isKeyPressed(GLFW_KEY_1))
+                localTransforms["key49"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
+            if (window.isKeyPressed(GLFW_KEY_2))
+                localTransforms["key48"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
+            if (window.isKeyPressed(GLFW_KEY_3))
+                localTransforms["key47"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
+            if (window.isKeyPressed(GLFW_KEY_4))
+                localTransforms["key46"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
+            if (window.isKeyPressed(GLFW_KEY_5))
+                localTransforms["key45"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
+            if (window.isKeyPressed(GLFW_KEY_6))
+                localTransforms["key44"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
+            if (window.isKeyPressed(GLFW_KEY_7))
+                localTransforms["key43"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
+            if (window.isKeyPressed(GLFW_KEY_8))
+                localTransforms["key42"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
+            if (window.isKeyPressed(GLFW_KEY_9))
+                localTransforms["key41"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
+            if (window.isKeyPressed(GLFW_KEY_0))
+                localTransforms["key40"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
+
+            // Klawisz 'Spacja' animuje pedał pianina
+            if (window.isKeyPressed(GLFW_KEY_SPACE))
+            {
+                glm::mat4 pedalTransform = glm::mat4(1.0f);
+                // Pedał zazwyczaj obraca się lekko w dół, więc dodajemy obrót na osi X
+                pedalTransform = glm::translate(pedalTransform, glm::vec3(0.0f, -0.5f, 0.0f));
+                pedalTransform = glm::rotate(pedalTransform, glm::radians(-5.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+                localTransforms["pedal1"] = pedalTransform;
+            }
+
+            // --- OBSŁUGA OTWIERANIA KLAPY (Klawisz 'O') ---
+            if (window.isKeyPressed(GLFW_KEY_O))
+            {
+                if (!oKeyPressed)
+                {
+                    isPianoOpen = !isPianoOpen; // Zmieniamy stan na przeciwny
+                    oKeyPressed = true;         // Blokujemy do czasu puszczenia klawisza
+                }
+            }
+            else
+            {
+                oKeyPressed = false; // Klawisz puszczony, zdejmujemy blokadę
+            }
+
+            // Płynna zmiana kąta na podstawie stanu
+            if (isPianoOpen)
+            {
+                currentLidAngle += lidSpeed * deltaTime;
+                if (currentLidAngle > maxLidAngle)
+                    currentLidAngle = maxLidAngle;
+            }
+            else
+            {
+                currentLidAngle -= lidSpeed * deltaTime;
+                if (currentLidAngle < 0.0f)
+                    currentLidAngle = 0.0f;
+            }
+
+            // --- ANIMACJA KLAPY (NAPRAWIONY PUNKT OBROTU) ---
+            if (currentLidAngle > 0.0f)
+            {
+                glm::mat4 lidTransform = glm::mat4(1.0f);
+
+
+                // 1. Definiujemy wektor przesunięcia DO zawiasów (tył klapy).
+                glm::vec3 pivotOffset = glm::vec3(0.0f, 50.0f, -100.0f);
+                // Operacja 3: Przesuwamy z powrotem na obudowę (translacja dodatnia)
+                lidTransform = glm::translate(lidTransform, -pivotOffset);
+
+                // Operacja 2: Obrót (deska obraca się idealnie wokół krawędzi w 0,0,0)
+                lidTransform = glm::rotate(lidTransform, glm::radians(currentLidAngle), glm::vec3(1.0f, 0.0f, 0.0f));
+
+                // Operacja 1: Przesuwamy krawędź zawiasu do środka świata (translacja ujemna)
+                lidTransform = glm::translate(lidTransform, pivotOffset);
+
+                // Przekazujemy do mapy (nazwa 'pianoTop' z Twojego logu)
+                localTransforms["pianoTop"] = lidTransform;
+            }
+
             // Przesłanie macierzy do shadera
-            myShader.setMat4("M", M);
             myShader.setMat4("V", V);
             myShader.setVec3("viewPos", cameraPos); // Bardzo ważne dla oświetlenia Blinna-Phonga!
             myShader.setMat4("P", P);               // P wysyłamy jak zwykle
 
             // Rysowanie modelu
-            myModel.Draw(myShader);
+            myModel.Draw(myShader, M, localTransforms);
 
             // Zamiana buforów i przetwarzanie zdarzeń systemu okien
             window.swapBuffers();

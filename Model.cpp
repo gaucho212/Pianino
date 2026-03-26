@@ -6,10 +6,19 @@ Model::Model(const std::string &path)
     loadModel(path);
 }
 
-void Model::Draw(const Shader &shader) const
-{
-    for (unsigned int i = 0; i < meshes.size(); i++)
-    {
+void Model::Draw(const Shader& shader, glm::mat4 baseMatrix, std::unordered_map<std::string, glm::mat4> localTransforms) const {
+    for (unsigned int i = 0; i < meshes.size(); i++) {
+        glm::mat4 finalM = baseMatrix; // Domyślnie pozycja całego pianina
+        
+        // Sprawdzamy, czy dla tej siatki (np. "Key_01") mamy zaplanowaną animację
+        if (localTransforms.find(meshes[i].name) != localTransforms.end()) {
+            // Mnożymy macierz pianina przez lokalny ruch klawisza!
+            finalM = finalM * localTransforms[meshes[i].name];
+        }
+
+        // PRZESYŁAMY MACIERZ DO SHADERA OSOBNO DLA KAŻDEGO ELEMENTU
+        shader.setMat4("M", finalM);
+
         meshes[i].Draw(shader);
     }
 }
@@ -58,6 +67,7 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene * scene )
 {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
+    std::string meshName = mesh->mName.C_Str();
 
     // KROK 1: Wierzchołki
     for (unsigned int i = 0; i < mesh->mNumVertices; i++)
@@ -112,7 +122,7 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene * scene )
     }
 
     // Zwracamy Mesh z przypisanym ID tekstury!
-    return Mesh(vertices, indices, meshTextureID);
+    return Mesh(meshName, vertices, indices, meshTextureID);
 }
 GLuint Model::loadMaterialTexture(aiMaterial* mat, const aiScene* /*scene*/) {
     // Sprawdzamy, czy materiał ma przypisaną teksturę typu "Diffuse" (podstawowy kolor)

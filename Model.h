@@ -19,7 +19,7 @@ public:
     Model(const std::string &path);
 
     // Rysuje cały model (wywołuje Draw dla każdej siatki z osobna)
-    void Draw(const Shader &shader) const;
+    void Draw(const Shader &shader, glm::mat4 baseMatrix, std::unordered_map<std::string, glm::mat4> localTransforms = {}) const;
 
 private:
     // Katalog, w którym znajduje się plik (przydatne później do wczytywania tekstur)

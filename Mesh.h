@@ -18,13 +18,13 @@ class Mesh
 {
 public:
     // Dane siatki (przechowywane w pamięci RAM)
+    std::string name; // Nazwa z pliku ojektu
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
     GLuint textureID;
 
     // Konstruktor: przyjmuje dane i od razu wysyła je na kartę graficzną
-    Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, GLuint textureID);
-    // Funkcja rysująca ten konkretny fragment modelu
+    Mesh(std::string name, std::vector<Vertex> vertices, std::vector<unsigned int> indices, GLuint textureID); // Funkcja rysująca ten konkretny fragment modelu
     void Draw(const Shader &shader) const;
 
 private:

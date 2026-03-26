@@ -1,10 +1,10 @@
 #include "Mesh.h"
 #include <cstddef> // Potrzebne dla offsetof
 
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices, GLuint textureID)
-{
-    this->vertices = vertices;
-    this->indices = indices;
+Mesh::Mesh(std::string name, std::vector<Vertex> vertices, std::vector<unsigned int> indices, GLuint textureID) {
+    this->name = name; // Nazwa
+    this->vertices = vertices;// Wierzchołki
+    this->indices = indices;// Indexy
     this->textureID = textureID; // Zapisujemy ID tekstury
 
     setupMesh();
