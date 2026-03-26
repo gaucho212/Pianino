@@ -35,8 +35,11 @@ int main()
         float rotationSpeed = 0.5f;
         float lastFrameTime = glfwGetTime();
 
+        // Obliczanie fps
+        float time_second = 0.0f;
+        int frames = 0;
 
-            while (!window.shouldClose())
+        while (!window.shouldClose())
         {
             // Obsługa klawiszy
             window.processInput();
@@ -44,6 +47,19 @@ int main()
             // Obliczanie czasu
             float currentFrameTime = glfwGetTime();
             float deltaTime = currentFrameTime - lastFrameTime;
+            time_second += deltaTime;
+            frames++;
+
+            // Sekunda
+            if (time_second >= 1.0f)
+            {
+                // Wypisanie klatek na sekunde
+                std::string newTitle = "Projekt Pianino 3D - " + std::to_string(frames) + " FPS";
+                window.setTitle(newTitle);
+                // Reset klatek po sekundzie
+                frames = 0;
+                time_second = 0.0f;
+            }
             lastFrameTime = currentFrameTime;
 
             // Obsługa klawiszy

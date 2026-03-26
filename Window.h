@@ -75,6 +75,10 @@ public:
     bool isKeyPressed(int key) const {
         return glfwGetKey(windowHandle, key) == GLFW_PRESS;
     }
+
+    void setTitle(const std::string& title) {
+        glfwSetWindowTitle(windowHandle, title.c_str());
+    }
     
     bool shouldClose() const
     {
