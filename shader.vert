@@ -7,6 +7,7 @@ layout(location = 2) in vec2 aTexCoords;
 // To wyślemy do Fragment Shadera
 out vec3 FragPos;  
 out vec3 Normal;   
+out vec2 TexCoords; 
 
 uniform mat4 M;
 uniform mat4 V;
@@ -21,6 +22,7 @@ void main() {
     // (np. spłaszczysz go), zwykłe wektory normalne się wykrzywią i oświetlenie będzie zepsute.
     // Używamy odwróconej, transponowanej macierzy 3x3, aby temu zapobiec.
     Normal = mat3(transpose(inverse(M))) * aNormal;  
+    TexCoords = aTexCoords; 
     
     // Standardowa pozycja na ekranie
     gl_Position = P * V * vec4(FragPos, 1.0);

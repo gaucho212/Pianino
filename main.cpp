@@ -1,6 +1,7 @@
 #include "Window.h"
 #include "Shader.h"
 #include "Model.h"
+#include "Texture.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -17,7 +18,12 @@ int main()
         Shader myShader("shader.vert", "shader.frag");
 
         // 3. Ładowanie modelu 3D
-        Model myModel("Piano.obj");
+        Model myModel("Tekstury_objekty/Piano.obj");
+
+
+        
+        // Mówimy shaderowi, że zmienna "tex" używa slotu numer 0
+        myShader.use();
 
         // 4. Konfiguracja matryc
         glm::mat4 V = glm::lookAt(
@@ -83,8 +89,8 @@ int main()
             glm::vec3 cameraPos = glm::vec3(0.0f, 2.0f, 5.0f);
             myShader.setVec3("viewPos", cameraPos);
 
-            // Kolor obiektu
-            myShader.setVec3("objectColor", glm::vec3(0.25f, 0.15f, 0.08f));
+            // Kolor obiektu wczytana grafika
+            //myShader.setVec3("objectColor", glm::vec3(0.25f, 0.15f, 0.08f));
 
             // USTAWIENIA ŚWIATŁA 1 (Kierunkowe - chłodne)
             // Wektor kierunku - świeci z góry, z prawej, lekko z tyłu
@@ -108,6 +114,8 @@ int main()
             myShader.setMat4("M", M);
             myShader.setMat4("V", V);
             myShader.setMat4("P", P);
+
+            
 
             // Rysowanie modelu
             myModel.Draw(myShader);

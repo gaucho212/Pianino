@@ -54,7 +54,7 @@ void Model::processNode(aiNode *node, const aiScene *scene)
     }
 }
 
-Mesh Model::processMesh(aiMesh *mesh, const aiScene * /* scene */)
+Mesh Model::processMesh(aiMesh *mesh, const aiScene * scene )
 {
     std::vector<Vertex> vertices;
     std::vector<unsigned int> indices;
@@ -101,7 +101,49 @@ Mesh Model::processMesh(aiMesh *mesh, const aiScene * /* scene */)
         }
     }
 
-    // KROK 3: Zwracamy naszą klasę Mesh
-    // (Na tym etapie na razie pomijamy materiały/tekstury - zrobimy to przed Lab 11)
-    return Mesh(vertices, indices);
+    // KROK 3: MATERIAŁY I TEKSTURY (NOWE!)
+    GLuint meshTextureID = 0; // Domyślnie brak tekstury
+    
+    if (mesh->mMaterialIndex < scene->mNumMaterials) {
+        // Pobieramy materiał z głównej sceny
+        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+        // Ładujemy teksturę rozproszenia (Diffuse) dla tego materiału
+        meshTextureID = loadMaterialTexture(material, scene);
+    }
+
+    // Zwracamy Mesh z przypisanym ID tekstury!
+    return Mesh(vertices, indices, meshTextureID);
+}
+GLuint Model::loadMaterialTexture(aiMaterial* mat, const aiScene* /*scene*/) {
+    // Sprawdzamy, czy materiał ma przypisaną teksturę typu "Diffuse" (podstawowy kolor)
+    if (mat->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+        aiString str;
+        mat->GetTexture(aiTextureType_DIFFUSE, 0, &str);
+        
+        // Czasem ścieżki w plikach z internetu mają ukośniki z Windowsa, zamieniamy je na uniwersalne
+        std::string filename = std::string(str.C_Str());
+        std::replace(filename.begin(), filename.end(), '\\', '/');
+        
+        // Wyciągamy samą nazwę pliku, ignorując foldery zapisane w obj (częsty problem modeli z sieci)
+        std::string justName = filename.substr(filename.find_last_of('/') + 1);
+        std::string fullPath = directory + "/" + justName;
+
+        // Sprawdzamy, czy już wcześniej załadowaliśmy ten obrazek
+        if (loadedTextures.find(justName) == loadedTextures.end()) {
+            try {
+                // Jeśli nie, tworzymy nową teksturę i zapisujemy w Cache
+                // Używamy std::make_shared dla zachowania RAII
+                loadedTextures[justName] = std::make_shared<Texture>(fullPath);
+                std::cout << "Zaladowano teksture modelu: " << fullPath << "\n";
+            } catch (const std::exception& e) {
+                std::cerr << "Ostrzezenie: Nie udalo sie zaladowac tekstury " << fullPath << " - uzywam koloru domyslnego.\n";
+                return 0; // Zwracamy 0 (brak tekstury) w razie awarii
+            }
+        }
+        
+        // Zwracamy surowe ID tekstury z OpenGL, by siatka mogła je zbindować
+        return loadedTextures[justName]->getID(); 
+    }
+    
+    return 0; // Materiał nie miał tekstury
 }

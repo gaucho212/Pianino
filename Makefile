@@ -10,7 +10,7 @@ LDFLAGS = -lglfw -lGLEW -lGL -lassimp
 TARGET = piano
 
 
-SRCS = main.cpp Shader.cpp Mesh.cpp Model.cpp lodepng.cpp
+SRCS = main.cpp Shader.cpp Mesh.cpp Model.cpp lodepng.cpp Texture.cpp
 OBJS = $(SRCS:.cpp=.o)
 
 # Główna reguła budowania
