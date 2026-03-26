@@ -79,7 +79,7 @@ public:
     void setTitle(const std::string& title) {
         glfwSetWindowTitle(windowHandle, title.c_str());
     }
-    
+
     bool shouldClose() const
     {
         return glfwWindowShouldClose(windowHandle);
@@ -102,5 +102,15 @@ public:
         {
             glfwSetWindowShouldClose(windowHandle, true);
         }
+    }
+
+    // Ukrywa kursor i blokuje go w oknie (styl FPS)
+    void disableCursor() {
+        glfwSetInputMode(windowHandle, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+
+    // Pobiera aktualną pozycję myszy
+    void getCursorPos(double& xpos, double& ypos) const {
+        glfwGetCursorPos(windowHandle, &xpos, &ypos);
     }
 };
