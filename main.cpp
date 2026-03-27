@@ -12,7 +12,7 @@ int main()
     try
     {
         // 1. Inicjalizacja okna
-        Window window(800, 600, "Projekt Pianino 3D - Lab 8 (Wczytywanie Modeli)");
+        Window window(1200, 800, "Projekt Pianino 3D - Lab 8 (Wczytywanie Modeli)");
 
         // 2. Ładowanie shaderów z plików
         Shader myShader("shader.vert", "shader.frag");
@@ -24,7 +24,7 @@ int main()
         myShader.use();
 
         // Zmienne kamery
-        glm::vec3 cameraPos = glm::vec3(0.0f, 2.0f, 5.0f);     // Gdzie stoimy
+        glm::vec3 cameraPos = glm::vec3(3.0f, 1.0f, 0.0f);     // Gdzie stoimy
         glm::vec3 cameraFront = glm::vec3(0.0f, -0.3f, -1.0f); // Gdzie patrzymy (lekko w dół i w głąb ekranu)
         glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);      // Gdzie jest "sufit"
 
@@ -33,10 +33,10 @@ int main()
         // ZMIENNE DO MYSZKI I KĄTÓW EULERA
         window.disableCursor(); // Ukrywamy i blokujemy kursor!
 
-        float yaw = -90.0f; // Yaw ustawiamy na -90.0, aby na starcie kamera patrzyła w stronę ujemnej osi Z
-        float pitch = 0.0f; // Na starcie patrzymy prosto przed siebie
+        float yaw = -180.0f; // Yaw na start jestsmy tylem sie sie odwracamy
+        float pitch = -20.0f; // Na starcie patrzymy w dol fortepianu
 
-        double lastX = 400.0, lastY = 300.0; // Środek okna (zakładając 800x600)
+        double lastX = 600.0, lastY = 400.0; // Środek okna (zakładając 1200x800)
         bool firstMouse = true;              // Flaga, żeby kamera nie "skoczyła" przy pierwszym ruchu
 
         // Zmienne obrotu
@@ -167,7 +167,7 @@ int main()
                 fov = 45.0f;
 
             // OBLICZAMY NOWĄ MACIERZ PROJEKCJI CO KLATKĘ
-            glm::mat4 P = glm::perspective(glm::radians(fov), 800.0f / 600.0f, 0.1f, 100.0f);
+            glm::mat4 P = glm::perspective(glm::radians(fov), 1200.0f / 800.0f, 0.1f, 100.0f);
 
             // Czyszczenie tła (Ciemny grafitowy)
             glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
@@ -278,7 +278,7 @@ int main()
 
 
                 // 1. Definiujemy wektor przesunięcia DO zawiasów (tył klapy).
-                glm::vec3 pivotOffset = glm::vec3(0.0f, 50.0f, -100.0f);
+                glm::vec3 pivotOffset = glm::vec3(0.0f, 76.0f, -120.0f);
                 // Operacja 3: Przesuwamy z powrotem na obudowę (translacja dodatnia)
                 lidTransform = glm::translate(lidTransform, -pivotOffset);
 

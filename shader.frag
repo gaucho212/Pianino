@@ -17,7 +17,11 @@ uniform vec3 pointLightColor;
 void main() {
     // Odczytujemy kolor bazowy piksela prosto z obrazka png!
     vec3 texColor = texture(tex, TexCoords).rgb;
-
+    
+    // Jeśli pobrany kolor to idealna czerń (brak tekstury), nadajmy mu zastępczy kolor (np. ciemny szary)
+    if (texColor == vec3(0.0, 0.0, 0.0)) {
+        texColor = vec3(0.2, 0.2, 0.2); // Wnętrze pianina będzie ciemnoszare
+    }
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);
 
