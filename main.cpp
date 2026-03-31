@@ -12,7 +12,7 @@ int main()
     try
     {
         // 1. Inicjalizacja okna
-        Window window(1200, 800, "Projekt Pianino 3D - Lab 8 (Wczytywanie Modeli)");
+        Window window(1200, 800, "Projekt Pianino 3D - Final");
 
         // 2. Ładowanie shaderów z plików
         Shader myShader("shader.vert", "shader.frag");

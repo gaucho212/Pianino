@@ -4,7 +4,7 @@ CXXFLAGS = -std=c++17 -Wall -Wextra -O2
 
 
 #BIBLIOTEKI
-LDFLAGS = -lglfw -lGLEW -lGL -lassimp
+LDFLAGS = -lglfw -lGLEW -lGL -lassimp -lsfml-audio -lsfml-system
 
 # Plik wynikowego
 TARGET = piano
