@@ -7,6 +7,11 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
 
+#include <SFML/Audio.hpp>
+#include <vector>
+#include <string>
+#include <unordered_map>
+
 int main()
 {
     try
@@ -58,6 +63,49 @@ int main()
         // Obliczanie fps
         float time_second = 0.0f;
         int frames = 0;
+
+        // --- KONFIGURACJA DŹWIĘKÓW I KLAWISZY ---
+        struct PianoKey {
+            int keyCode;             // Przycisk na klawiaturze (GLFW)
+            std::string meshName;    // Nazwa siatki z logów Assimpa
+            std::string soundPath;   // Ścieżka do pliku audio
+            bool isPressed;          // Stan wciśnięcia (blokada przed zacięciem)
+            sf::SoundBuffer buffer;  // Pamięć RAM dla dźwięku
+            sf::Sound sound;         // Odtwarzacz SFML
+
+            // Konstruktor
+            PianoKey(int k, std::string m, std::string s, bool p) 
+                : keyCode(k), meshName(m), soundPath(s), isPressed(p) {}
+        };
+
+        // Tworzenie listy 7 klawiszy
+        std::vector<PianoKey> keys = {
+            PianoKey(GLFW_KEY_1, "key49", "dzwieki/A.wav", false),
+            PianoKey(GLFW_KEY_2, "key48", "dzwieki/B.wav", false),
+            PianoKey(GLFW_KEY_3, "key47", "dzwieki/C.wav", false),
+            PianoKey(GLFW_KEY_4, "key46", "dzwieki/D.wav", false),
+            PianoKey(GLFW_KEY_5, "key45", "dzwieki/E.wav", false),
+            PianoKey(GLFW_KEY_6, "key44", "dzwieki/F.wav", false),
+            PianoKey(GLFW_KEY_7, "key43", "dzwieki/G.wav", false),
+        };
+
+        // ZABEZPIECZENIE DLA WSL: Wyłączamy spamowanie błędami SFML w konsoli
+        sf::err().rdbuf(NULL); 
+        bool soundSystemWorking = true;
+
+        // Wczytujemy pliki .wav do pamięci
+        for (auto& key : keys) {
+            if (key.buffer.loadFromFile(key.soundPath)) {
+                key.sound.setBuffer(key.buffer);
+            } else {
+                soundSystemWorking = false; // Jeśli brakuje pliku lub WSL blokuje audio
+            }
+        }
+
+        if (!soundSystemWorking) {
+            std::cout << "INFO: Uruchomiono bez obslugi dzwieku lub brakuje plikow .wav.\n";
+        }
+
 
         while (!window.shouldClose())
         {
@@ -204,36 +252,28 @@ int main()
 
             // Obsluga klawiszy pianina
 
-            // --- ANIMACJA KLAWISZY (ŚRODEK PIANINA) ---
+            // --- ANIMACJA KLAWISZY I DŹWIĘK ---
             std::unordered_map<std::string, glm::mat4> localTransforms;
-
-            // Głębokość wciśnięcia klawisza.
-            // UWAGA: Jeśli klawisze znikają całkowicie lub ledwo drgają, zmień tę wartość! (np. na -0.05f lub -2.0f)
             float keyPressDepth = -0.5f;
 
-            // Jeśli klawisz jest wciśnięty, tworzymy macierz przesunięcia w dół na osi -X przez lokalny obór -90 stopni
-            if (window.isKeyPressed(GLFW_KEY_1))
-                localTransforms["key49"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
-            if (window.isKeyPressed(GLFW_KEY_2))
-                localTransforms["key48"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
-            if (window.isKeyPressed(GLFW_KEY_3))
-                localTransforms["key47"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
-            if (window.isKeyPressed(GLFW_KEY_4))
-                localTransforms["key46"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
-            if (window.isKeyPressed(GLFW_KEY_5))
-                localTransforms["key45"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
-            if (window.isKeyPressed(GLFW_KEY_6))
-                localTransforms["key44"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
-            if (window.isKeyPressed(GLFW_KEY_7))
-                localTransforms["key43"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
-            if (window.isKeyPressed(GLFW_KEY_8))
-                localTransforms["key42"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
-            if (window.isKeyPressed(GLFW_KEY_9))
-                localTransforms["key41"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
-            if (window.isKeyPressed(GLFW_KEY_0))
-                localTransforms["key40"] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
+            for (auto& key : keys) {
+                if (window.isKeyPressed(key.keyCode)) {
+                    // 1. Ugięcie klawisza (Twoja logika przesunięcia na osi X)
+                    localTransforms[key.meshName] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
+                    
+                    // 2. Odtwarzanie dźwięku
+                    if (!key.isPressed) {
+                        if (soundSystemWorking) {
+                            key.sound.play(); // Graj tylko, jeśli audio działa
+                        }
+                        key.isPressed = true; // Zabezpieczenie przed zacięciem
+                    }
+                } else {
+                    key.isPressed = false; // Reset klawisza po jego puszczeniu
+                }
+            }
 
-            // Klawisz 'Spacja' animuje pedał pianina
+            //Animacja spacji (pedała)
             if (window.isKeyPressed(GLFW_KEY_SPACE))
             {
                 glm::mat4 pedalTransform = glm::mat4(1.0f);
