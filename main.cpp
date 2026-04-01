@@ -89,16 +89,32 @@ int main()
             // 1. KLAWISZE TYLKO DLA PIANOLI (Z pliku tekstowego)
             // ========================================================
             
-            // Najniższa oktawa (Subkontra)
             PianoKey(GLFW_KEY_UNKNOWN, "key58", "A0", "dzwieki/A0.wav", false),
             PianoKey(GLFW_KEY_UNKNOWN, "key57", "B0", "dzwieki/B0.wav", false),
             
-            // Oktawa Kontra (C1 - G1)
             PianoKey(GLFW_KEY_UNKNOWN, "key56", "C1", "dzwieki/C1.wav", false),
             PianoKey(GLFW_KEY_UNKNOWN, "key55", "D1", "dzwieki/D1.wav", false),
             PianoKey(GLFW_KEY_UNKNOWN, "key54", "E1", "dzwieki/E1.wav", false),
             PianoKey(GLFW_KEY_UNKNOWN, "key53", "F1", "dzwieki/F1.wav", false),
             PianoKey(GLFW_KEY_UNKNOWN, "key52", "G1", "dzwieki/G1.wav", false),
+            PianoKey(GLFW_KEY_UNKNOWN, "key51", "A1", "dzwieki/A1.wav", false),
+            PianoKey(GLFW_KEY_UNKNOWN, "key51", "B1", "dzwieki/B1.wav", false),//Brak
+
+            PianoKey(GLFW_KEY_UNKNOWN, "key50", "C2", "dzwieki/C2.wav", false),
+            PianoKey(GLFW_KEY_UNKNOWN, "key49", "D2", "dzwieki/D2.wav", false),
+            PianoKey(GLFW_KEY_UNKNOWN, "key48", "E2", "dzwieki/E2.wav", false),//Brak
+            PianoKey(GLFW_KEY_UNKNOWN, "key47", "F2", "dzwieki/F2.wav", false),
+            PianoKey(GLFW_KEY_UNKNOWN, "key46", "G2", "dzwieki/G2.wav", false),//Brak
+            PianoKey(GLFW_KEY_UNKNOWN, "key45", "A2", "dzwieki/A2.wav", false),
+            PianoKey(GLFW_KEY_UNKNOWN, "key44", "B2", "dzwieki/B2.wav", false),//Brak
+
+             PianoKey(GLFW_KEY_UNKNOWN,"key43", "C3", "dzwieki/C3.wav", false),
+            PianoKey(GLFW_KEY_UNKNOWN, "key42", "D3", "dzwieki/D3.wav", false),//Brak
+            PianoKey(GLFW_KEY_UNKNOWN, "key41", "E3", "dzwieki/E3.wav", false),//Brak
+            PianoKey(GLFW_KEY_UNKNOWN, "key40", "F3", "dzwieki/F3.wav", false),//Brak
+            PianoKey(GLFW_KEY_UNKNOWN, "key39", "G3", "dzwieki/G3.wav", false),//Brak
+            PianoKey(GLFW_KEY_UNKNOWN, "key38", "A3", "dzwieki/A3.wav", false),
+            PianoKey(GLFW_KEY_UNKNOWN, "key37", "B3", "dzwieki/B3.wav", false),//Brak
 
            
 
