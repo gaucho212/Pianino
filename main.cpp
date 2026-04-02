@@ -41,7 +41,7 @@ int main()
         // ZMIENNE DO MYSZKI I KĄTÓW EULERA
         window.disableCursor(); // Ukrywamy i blokujemy kursor!
 
-        float yaw = -180.0f; // Yaw na start jestsmy tylem sie sie odwracamy
+        float yaw = -180.0f;  // Yaw na start jestsmy tylem sie sie odwracamy
         float pitch = -20.0f; // Na starcie patrzymy w dol fortepianu
 
         double lastX = 600.0, lastY = 400.0; // Środek okna (zakładając 1200x800)
@@ -68,19 +68,20 @@ int main()
         int frames = 0;
 
         // --- KONFIGURACJA DŹWIĘKÓW I KLAWISZY ---
-        struct PianoKey {
-            int keyCode;             // Przycisk na klawiaturze (GLFW)
-            std::string meshName;    // Nazwa siatki z logów Assimpa
-            std::string noteName;    // NOWE: Nazwa muzyczna nuty (np. "C4")
-            std::string soundPath;   // Ścieżka do pliku audio
-            bool isPressed;          // Stan wciśnięcia (blokada przed zacięciem)
-            sf::SoundBuffer buffer;  // Pamięć RAM dla dźwięku
-            sf::Sound sound;         // Odtwarzacz SFML
+        struct PianoKey
+        {
+            int keyCode;            // Przycisk na klawiaturze (GLFW)
+            std::string meshName;   // Nazwa siatki z logów Assimpa
+            std::string noteName;   // NOWE: Nazwa muzyczna nuty (np. "C4")
+            std::string soundPath;  // Ścieżka do pliku audio
+            bool isPressed;         // Stan wciśnięcia (blokada przed zacięciem)
+            sf::SoundBuffer buffer; // Pamięć RAM dla dźwięku
+            sf::Sound sound;        // Odtwarzacz SFML
 
-           float pitch; // NOWE: Zmiana tonacji (domyślnie 1.0 = oryginalny dźwięk)
+            float pitch; // NOWE: Zmiana tonacji (domyślnie 1.0 = oryginalny dźwięk)
 
             // Zaktualizowany konstruktor z parametrem pitch (domyślnie 1.0f)
-            PianoKey(int k, std::string m, std::string n, std::string s, bool p, float pt = 1.0f) 
+            PianoKey(int k, std::string m, std::string n, std::string s, bool p, float pt = 1.0f)
                 : keyCode(k), meshName(m), noteName(n), soundPath(s), isPressed(p), pitch(pt) {}
         };
 
@@ -90,8 +91,8 @@ int main()
             // Najniższa oktawa (Subkontra)
             PianoKey(GLFW_KEY_UNKNOWN, "key58", "A0", "dzwieki/A0v1.wav", false, 1.0f),
             // B0 nie ma. Bierzemy A0 i podnosimy o 2 półtony!
-            PianoKey(GLFW_KEY_UNKNOWN, "key57", "B0", "dzwieki/A0v1.wav", false, 1.12246f), 
-            
+            PianoKey(GLFW_KEY_UNKNOWN, "key57", "B0", "dzwieki/A0v1.wav", false, 1.12246f),
+
             // Oktawa 1
             PianoKey(GLFW_KEY_UNKNOWN, "key56", "C1", "dzwieki/C1v1.wav", false, 1.0f),
             // D1 nie ma. Bierzemy C1 i podnosimy o 2 półtony
@@ -102,23 +103,23 @@ int main()
             PianoKey(GLFW_KEY_UNKNOWN, "key53", "F1", "dzwieki/F#1v1.wav", false, 0.94387f),
             // G1 nie ma. Bierzemy F#1 i podnosimy o 1 półton
             PianoKey(GLFW_KEY_UNKNOWN, "key52", "G1", "dzwieki/F#1v1.wav", false, 1.05946f),
-            
+
             PianoKey(GLFW_KEY_UNKNOWN, "key51", "A1", "dzwieki/A1v1.wav", false, 1.0f),
             // B1 nie ma. Bierzemy A1 i podnosimy o 2 półtony
             PianoKey(GLFW_KEY_UNKNOWN, "key50", "B1", "dzwieki/A1v1.wav", false, 1.12246f),
 
             // Oktawa 2
             PianoKey(GLFW_KEY_UNKNOWN, "key49", "C2", "dzwieki/C2v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_UNKNOWN, "key48", "D2", "dzwieki/C2v1.wav", false, 1.12246f), // Brak D2 -> C2 +2
+            PianoKey(GLFW_KEY_UNKNOWN, "key48", "D2", "dzwieki/C2v1.wav", false, 1.12246f),  // Brak D2 -> C2 +2
             PianoKey(GLFW_KEY_UNKNOWN, "key47", "E2", "dzwieki/D#2v1.wav", false, 1.05946f), // Brak E2 -> D#2 +1
             PianoKey(GLFW_KEY_UNKNOWN, "key46", "F2", "dzwieki/F#2v1.wav", false, 0.94387f), // Brak F2 -> F#2 -1
             PianoKey(GLFW_KEY_UNKNOWN, "key45", "G2", "dzwieki/F#2v1.wav", false, 1.05946f), // Brak G2 -> F#2 +1
             PianoKey(GLFW_KEY_UNKNOWN, "key44", "A2", "dzwieki/A2v1.wav", false, 1.0f),
             PianoKey(GLFW_KEY_UNKNOWN, "key43", "B2", "dzwieki/A2v1.wav", false, 1.12246f), // Brak B2 -> A2 +2
 
-           // Oktawa 3
+            // Oktawa 3
             PianoKey(GLFW_KEY_UNKNOWN, "key42", "C3", "dzwieki/C3v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_UNKNOWN, "key41", "D3", "dzwieki/C3v1.wav", false, 1.12246f), // Brak D2 -> C2 +2
+            PianoKey(GLFW_KEY_UNKNOWN, "key41", "D3", "dzwieki/C3v1.wav", false, 1.12246f),  // Brak D2 -> C2 +2
             PianoKey(GLFW_KEY_UNKNOWN, "key40", "E3", "dzwieki/D#3v1.wav", false, 1.05946f), // Brak E2 -> D#2 +1
             PianoKey(GLFW_KEY_UNKNOWN, "key39", "F3", "dzwieki/F#3v1.wav", false, 0.94387f), // Brak F2 -> F#2 -1
             PianoKey(GLFW_KEY_UNKNOWN, "key38", "G3", "dzwieki/F#3v1.wav", false, 1.05946f), // Brak G2 -> F#2 +1
@@ -127,7 +128,7 @@ int main()
 
             // Oktawa 4
             PianoKey(GLFW_KEY_UNKNOWN, "key35", "C4", "dzwieki/C4v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_UNKNOWN, "key34", "D4", "dzwieki/C4v1.wav", false, 1.12246f), // Brak D2 -> C2 +2
+            PianoKey(GLFW_KEY_UNKNOWN, "key34", "D4", "dzwieki/C4v1.wav", false, 1.12246f),  // Brak D2 -> C2 +2
             PianoKey(GLFW_KEY_UNKNOWN, "key33", "E4", "dzwieki/D#4v1.wav", false, 1.05946f), // Brak E2 -> D#2 +1
             PianoKey(GLFW_KEY_UNKNOWN, "key32", "F4", "dzwieki/F#4v1.wav", false, 0.94387f), // Brak F2 -> F#2 -1
             PianoKey(GLFW_KEY_UNKNOWN, "key31", "G4", "dzwieki/F#4v1.wav", false, 1.05946f), // Brak G2 -> F#2 +1
@@ -136,7 +137,7 @@ int main()
 
             // Oktawa 5
             PianoKey(GLFW_KEY_3, "key28", "C5", "dzwieki/C5v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_4, "key27", "D5", "dzwieki/C5v1.wav", false, 1.12246f), // Brak D2 -> C2 +2
+            PianoKey(GLFW_KEY_4, "key27", "D5", "dzwieki/C5v1.wav", false, 1.12246f),  // Brak D2 -> C2 +2
             PianoKey(GLFW_KEY_5, "key26", "E5", "dzwieki/D#5v1.wav", false, 1.05946f), // Brak E2 -> D#2 +1
             PianoKey(GLFW_KEY_6, "key25", "F5", "dzwieki/F#5v1.wav", false, 0.94387f), // Brak F2 -> F#2 -1
             PianoKey(GLFW_KEY_7, "key24", "G5", "dzwieki/F#5v1.wav", false, 1.05946f), // Brak G2 -> F#2 +1
@@ -145,7 +146,7 @@ int main()
 
             // Oktawa 6
             PianoKey(GLFW_KEY_UNKNOWN, "key21", "C6", "dzwieki/C6v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_UNKNOWN, "key20", "D6", "dzwieki/C6v1.wav", false, 1.12246f), // Brak D2 -> C2 +2
+            PianoKey(GLFW_KEY_UNKNOWN, "key20", "D6", "dzwieki/C6v1.wav", false, 1.12246f),  // Brak D2 -> C2 +2
             PianoKey(GLFW_KEY_UNKNOWN, "key19", "E6", "dzwieki/D#6v1.wav", false, 1.05946f), // Brak E2 -> D#2 +1
             PianoKey(GLFW_KEY_UNKNOWN, "key18", "F6", "dzwieki/F#6v1.wav", false, 0.94387f), // Brak F2 -> F#2 -1
             PianoKey(GLFW_KEY_UNKNOWN, "key17", "G6", "dzwieki/F#6v1.wav", false, 1.05946f), // Brak G2 -> F#2 +1
@@ -154,7 +155,7 @@ int main()
 
             // Oktawa 7
             PianoKey(GLFW_KEY_UNKNOWN, "key14", "C7", "dzwieki/C7v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_UNKNOWN, "key13", "D7", "dzwieki/C7v1.wav", false, 1.12246f), // Brak D2 -> C2 +2
+            PianoKey(GLFW_KEY_UNKNOWN, "key13", "D7", "dzwieki/C7v1.wav", false, 1.12246f),  // Brak D2 -> C2 +2
             PianoKey(GLFW_KEY_UNKNOWN, "key12", "E7", "dzwieki/D#7v1.wav", false, 1.05946f), // Brak E2 -> D#2 +1
             PianoKey(GLFW_KEY_UNKNOWN, "key11", "F7", "dzwieki/F#7v1.wav", false, 0.94387f), // Brak F2 -> F#2 -1
             PianoKey(GLFW_KEY_UNKNOWN, "key10", "G7", "dzwieki/F#7v1.wav", false, 1.05946f), // Brak G2 -> F#2 +1
@@ -163,7 +164,8 @@ int main()
         };
 
         // --- SYSTEM AUTOMATYCZNEGO ODTWARZANIA (PIANOLA) ---
-        struct NoteEvent {
+        struct NoteEvent
+        {
             float startTime;      // Kiedy klawisz ma się wcisnąć (w sekundach)
             std::string noteName; // Muzyczna nazwa nuty (np. "C4") z pliku txt
             std::string meshName; // Wyliczona nazwa siatki z modelu (np. "key49")
@@ -173,17 +175,54 @@ int main()
         };
 
         std::vector<NoteEvent> song;
-        std::ifstream file("dzwieki/nuty.txt");
-        
-        if (file.is_open()) {
+        int song_choise = 0;
+        std::cout << "Podaj numer muzyki:\n";
+        std::cout << "1. Oda do radosci - Beethoven\n";
+        std::cout << "2. Walc a-moll - Chopin\n";
+        std::cout << "3. Preludium C-dur - Bach\n";
+        std::cout << "Twoj wybor: ";
+        std::cin >> song_choise;
+
+        // Ustawiamy domyślną ścieżkę na wypadek złego wyboru
+        std::string filePath = "dzwieki/nuty.txt"; 
+
+        if (song_choise >= 1 && song_choise <= 3)
+        {
+            switch (song_choise)
+            {
+            case 1:
+                filePath = "dzwieki/Oda_do_radosci.txt";
+                break;
+            case 2:
+                filePath = "dzwieki/Walc_a-moll.txt";
+                break;
+            case 3:
+                filePath = "dzwieki/Preludium_C-dur.txt";
+                break;
+            }
+        }
+        else
+        {
+            std::cout << "UWAGA: Podano zly numer. Uruchamiam tryb bez utworu (lub z domyslnym plikiem).\n";
+            // Jeśli nie chcesz wczytywać niczego przy złym numerze, możesz np. zostawić pusty string:
+            filePath = ""; 
+        }
+
+        // DOPIERO TUTAJ, gdy już wiemy jaki to plik, otwieramy go!
+        std::ifstream file(filePath);
+
+        if (file.is_open())
+        {
             std::string line;
-            while (std::getline(file, line)) {
+            while (std::getline(file, line))
+            {
                 std::istringstream iss(line);
                 float start, duration;
                 std::string readNote;
-                
+
                 // Odczytujemy: CzasStartu, NazwaNuty, CzasTrwania
-                if (iss >> start >> readNote >> duration) {
+                if (iss >> start >> readNote >> duration)
+                {
                     NoteEvent note;
                     note.startTime = start;
                     note.noteName = readNote;
@@ -191,25 +230,32 @@ int main()
                     note.meshName = ""; // Domyślnie puste
 
                     // Szukamy siatki 3D przypisanej do tej nuty
-                    for (const auto& key : keys) {
-                        if (key.noteName == readNote) {
+                    for (const auto &key : keys)
+                    {
+                        if (key.noteName == readNote)
+                        {
                             note.meshName = key.meshName;
                             break; // Znaleziono, przerywamy szukanie
                         }
                     }
 
                     // Zapisujemy nutę tylko wtedy, gdy program rozpoznał jej nazwę
-                    if (note.meshName != "") {
+                    if (note.meshName != "")
+                    {
                         song.push_back(note);
-                    } else {
+                    }
+                    else
+                    {
                         std::cout << "UWAGA: Nierozpoznana nuta '" << readNote << "' w pliku txt!\n";
                     }
                 }
             }
             file.close();
-            std::cout << "INFO: Zaladowano utwor z pliku nuty.txt! Liczba nut: " << song.size() << "\n";
-        } else {
-            std::cout << "UWAGA: Nie znaleziono pliku nuty.txt w folderze projektu.\n";
+            std::cout << "INFO: Zaladowano utwor Liczba nut: " << song.size() << "\n";
+        }
+        else
+        {
+            std::cout << "UWAGA: Nie znaleziono pliku utworu w folderze projektu.\n";
         }
 
         // Zmienne sterujące trybami gry
@@ -218,23 +264,27 @@ int main()
         bool pKeyPressed = false; // Blokada dla klawisza 'P'
 
         // ZABEZPIECZENIE DLA WSL: Wyłączamy spamowanie błędami SFML w konsoli
-        sf::err().rdbuf(NULL); 
+        sf::err().rdbuf(NULL);
         bool soundSystemWorking = true;
 
         // Wczytujemy pliki .wav do pamięci
-        for (auto& key : keys) {
-            if (key.buffer.loadFromFile(key.soundPath)) {
+        for (auto &key : keys)
+        {
+            if (key.buffer.loadFromFile(key.soundPath))
+            {
                 key.sound.setBuffer(key.buffer);
                 key.sound.setPitch(key.pitch); // NOWE: SFML sam zmieni tonację dźwięku!
-            } else {
+            }
+            else
+            {
                 soundSystemWorking = false;
             }
         }
 
-        if (!soundSystemWorking) {
+        if (!soundSystemWorking)
+        {
             std::cout << "INFO: Uruchomiono bez obslugi dzwieku lub brakuje plikow .wav.\n";
         }
-
 
         while (!window.shouldClose())
         {
@@ -379,29 +429,35 @@ int main()
             M = glm::rotate(M, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
             M = glm::scale(M, glm::vec3(0.01f)); // Skalowanie ze wzgledu na duzy plik .obj
 
-            
-
             // --- PRZEŁĄCZNIK PIANOLI (Klawisz 'P') ---
-            if (window.isKeyPressed(GLFW_KEY_P)) {
-                if (!pKeyPressed) {
+            if (window.isKeyPressed(GLFW_KEY_P))
+            {
+                if (!pKeyPressed)
+                {
                     pKeyPressed = true;
-                    if (!isAutoPlaying) {
+                    if (!isAutoPlaying)
+                    {
                         // START PIANOLI
                         isAutoPlaying = true;
                         playbackTime = 0.0f; // Zerujemy czas
                         // Resetujemy stan wszystkich nut przed każdym odtworzeniem
-                        for (auto& note : song) {
+                        for (auto &note : song)
+                        {
                             note.isPlaying = false;
                             note.isFinished = false;
                         }
                         std::cout << "Pianola: START!\n";
-                    } else {
+                    }
+                    else
+                    {
                         // RĘCZNE ZATRZYMANIE PIANOLI
                         isAutoPlaying = false;
                         std::cout << "Pianola: STOP!\n";
                     }
                 }
-            } else {
+            }
+            else
+            {
                 pKeyPressed = false;
             }
 
@@ -409,23 +465,30 @@ int main()
             std::unordered_map<std::string, glm::mat4> localTransforms;
             float keyPressDepth = -0.5f;
 
-            if (isAutoPlaying) {
+            if (isAutoPlaying)
+            {
                 // ==========================================
                 // TRYB AUTOMATYCZNY (PIANOLA GRA Z PLIKU)
                 // ==========================================
                 playbackTime += deltaTime;
                 bool allFinished = true; // Sprawdzamy, czy utwór dobiegł końca
 
-                for (auto& note : song) {
-                    if (!note.isFinished) {
+                for (auto &note : song)
+                {
+                    if (!note.isFinished)
+                    {
                         allFinished = false;
 
                         // 1. Czy nadszedł czas, aby wcisnąć klawisz?
-                        if (playbackTime >= note.startTime && !note.isPlaying) {
+                        if (playbackTime >= note.startTime && !note.isPlaying)
+                        {
                             note.isPlaying = true;
-                            if (soundSystemWorking) {
-                                for (auto& key : keys) {
-                                    if (key.meshName == note.meshName) {
+                            if (soundSystemWorking)
+                            {
+                                for (auto &key : keys)
+                                {
+                                    if (key.meshName == note.meshName)
+                                    {
                                         key.sound.play(); // Gramy i pozwalamy wybrzmieć do końca (bez ucinania)
                                         break;
                                     }
@@ -434,12 +497,14 @@ int main()
                         }
 
                         // 2. Opadnięcie klawisza (animacja w dół)
-                        if (note.isPlaying) {
+                        if (note.isPlaying)
+                        {
                             localTransforms[note.meshName] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
                         }
 
                         // 3. Czy nadszedł czas, aby puścić klawisz? (Powrót animacji do góry)
-                        if (playbackTime >= note.startTime + note.duration) {
+                        if (playbackTime >= note.startTime + note.duration)
+                        {
                             note.isPlaying = false;
                             note.isFinished = true;
                             // UWAGA: Nie wywołujemy key.sound.stop(), dzięki czemu dźwięk pięknie wybrzmiewa (efekt pedału)
@@ -448,34 +513,42 @@ int main()
                 }
 
                 // Automatyczny powrót do trybu ręcznego, gdy piosenka się skończy
-                if (allFinished && song.size() > 0) {
+                if (allFinished && song.size() > 0)
+                {
                     isAutoPlaying = false;
                     std::cout << "Pianola: Koniec utworu.\n";
                 }
-
-            } else {
+            }
+            else
+            {
                 // ==========================================
                 // TRYB RĘCZNY (TY GRASZ NA KLAWIATURZE)
                 // ==========================================
-                for (auto& key : keys) {
-                    if (window.isKeyPressed(key.keyCode)) {
+                for (auto &key : keys)
+                {
+                    if (window.isKeyPressed(key.keyCode))
+                    {
                         // Ugięcie klawisza na ekranie
                         localTransforms[key.meshName] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
-                        
+
                         // Zagraj tylko w momencie pierwszego wciśnięcia
-                        if (!key.isPressed) {
-                            if (soundSystemWorking) {
+                        if (!key.isPressed)
+                        {
+                            if (soundSystemWorking)
+                            {
                                 key.sound.play(); // Gramy i pozwalamy mu naturalnie wybrzmieć
                             }
                             key.isPressed = true;
                         }
-                    } else {
+                    }
+                    else
+                    {
                         // Klawisz odskakuje (zdejmujemy blokadę dźwięku)
-                        key.isPressed = false; 
+                        key.isPressed = false;
                     }
                 }
             }
-            //Animacja spacji (pedała)
+            // Animacja spacji (pedała)
             if (window.isKeyPressed(GLFW_KEY_SPACE))
             {
                 glm::mat4 pedalTransform = glm::mat4(1.0f);
@@ -517,7 +590,6 @@ int main()
             if (currentLidAngle > 0.0f)
             {
                 glm::mat4 lidTransform = glm::mat4(1.0f);
-
 
                 // 1. Definiujemy wektor przesunięcia DO zawiasów (tył klapy).
                 glm::vec3 pivotOffset = glm::vec3(0.0f, 76.0f, -120.0f);
