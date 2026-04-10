@@ -15,41 +15,69 @@
 #include <fstream>
 #include <sstream>
 
+#include <cstdlib> // Do funkcji std::system()
+
+
+// =======================================================
+// DEFINICJE STRUKTUR (GLOBALNE - ZAWSZE WIDOCZNE)
+// =======================================================
+struct NoteEvent
+{
+    float startTime;      // Kiedy klawisz ma się wcisnąć (w sekundach)
+    std::string noteName; // Muzyczna nazwa nuty (np. "C4") z pliku txt
+    std::string meshName; // Wyliczona nazwa siatki z modelu (np. "key49")
+    float duration;       // Jak długo ma być wciśnięty
+    bool isPlaying = false;
+    bool isFinished = false;
+};
+
 int main()
 {
     try
     {
         // =======================================================
-        // 0. MENU W KONSOLI (MUSI BYĆ PRZED UTWORZENIEM OKNA!)
+        // 1. MENU W KONSOLI (MUSI BYĆ PRZED UTWORZENIEM OKNA!)
         // =======================================================
-
-        // --- SYSTEM AUTOMATYCZNEGO ODTWARZANIA (PIANOLA) ---
-        struct NoteEvent
-        {
-            float startTime;      // Kiedy klawisz ma się wcisnąć (w sekundach)
-            std::string noteName; // Muzyczna nazwa nuty (np. "C4") z pliku txt
-            std::string meshName; // Wyliczona nazwa siatki z modelu (np. "key49")
-            float duration;       // Jak długo ma być wciśnięty
-            bool isPlaying = false;
-            bool isFinished = false;
-        };
-        
         int song_choise = 0;
-        std::vector<NoteEvent> song; // Przenosimy deklarację wyżej
+        std::vector<NoteEvent> song; 
         
         std::cout << "Podaj numer muzyki:\n";
         std::cout << "1. Oda do radosci - Beethoven\n";
         std::cout << "2. Walc a-moll - Chopin\n";
         std::cout << "3. Preludium C-dur - Bach\n";
+        std::cout << "4. [NOWOSC] Zagraj wlasny plik MIDI (.mid)\n";
+        std::cout << "5. Załadowany plik nuty.txt\n";
         std::cout << "Twoj wybor: ";
         std::cin >> song_choise;
 
         std::string filePath = "dzwieki/nuty.txt"; 
-        if (song_choise >= 1 && song_choise <= 3) {
+        
+        if (song_choise == 4) {
+            std::string midiName;
+            std::cout << "Podaj nazwe pliku MIDI (musi byc w folderze projektu, np. piosenka.mid): ";
+            std::cin >> midiName;
+            
+            // Budujemy komendę do terminala WSL
+            std::string command = "python3 konwerter.py " + midiName + " dzwieki/nuty.txt";
+            std::cout << "Konwertuje plik " << midiName << "...\n";
+            
+            // C++ odpala skrypt w Pythonie!
+            int result = std::system(command.c_str());
+            
+            if (result == 0) {
+                std::cout << "Konwersja udana! Ladowanie utworu do Pianoli...\n";
+                filePath = "dzwieki/nuty.txt";
+            } else {
+                std::cout << "BLAD: Nie udalo sie skonwertowac pliku.\n";
+                filePath = "";
+            }
+        }
+        else if (song_choise >= 1 && song_choise <= 5 && song_choise!=4) {
             switch (song_choise) {
                 case 1: filePath = "dzwieki/Oda_do_radosci.txt"; break;
                 case 2: filePath = "dzwieki/Walc_a-moll.txt"; break;
                 case 3: filePath = "dzwieki/Preludium_C-dur.txt"; break;
+                case 5: filePath = "dzwieki/nuty.txt"; break;
             }
         } else {
             std::cout << "UWAGA: Podano zly numer. Tryb bez utworu.\n";
@@ -57,7 +85,7 @@ int main()
         }
 
         // =======================================================
-        // 1. INICJALIZACJA GRAFIKI
+        // 2. INICJALIZACJA GRAFIKI
         // =======================================================
 
         // 1. Inicjalizacja okna
@@ -129,79 +157,130 @@ int main()
         // Tworzenie listy klawiszy z nazwami nut!
         // (Możesz tu wpisać dowolne nazwy, np. "C4", "C#4", "D4" itd.)
         std::vector<PianoKey> keys = {
-            // Najniższa oktawa (Subkontra)
-            PianoKey(GLFW_KEY_UNKNOWN, "key58", "A0", "dzwieki/A0v1.wav", false, 1.0f),
-            // B0 nie ma. Bierzemy A0 i podnosimy o 2 półtony!
-            PianoKey(GLFW_KEY_UNKNOWN, "key57", "B0", "dzwieki/A0v1.wav", false, 1.12246f),
+            // ========================================================
+            // OKTAWA 0 (Subkontra) - Najniższe basy
+            // ========================================================
+            PianoKey(GLFW_KEY_UNKNOWN, "key58", "A0",  "dzwieki/A0v1.wav", false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key94", "A0s", "dzwieki/A0v1.wav", false, 1.05946f), // A#0 (A0 +1)
+            PianoKey(GLFW_KEY_UNKNOWN, "key57", "B0",  "dzwieki/A0v1.wav", false, 1.12246f), // B0  (A0 +2)
 
-            // Oktawa 1
-            PianoKey(GLFW_KEY_UNKNOWN, "key56", "C1", "dzwieki/C1v1.wav", false, 1.0f),
-            // D1 nie ma. Bierzemy C1 i podnosimy o 2 półtony
-            PianoKey(GLFW_KEY_UNKNOWN, "key55", "D1", "dzwieki/C1v1.wav", false, 1.12246f),
-            // E1 nie ma. Bierzemy D#1 (plik Ds1.wav) i podnosimy o 1 półton
-            PianoKey(GLFW_KEY_UNKNOWN, "key54", "E1", "dzwieki/D#1v1.wav", false, 1.05946f),
-            // F1 nie ma. Bierzemy F#1 (plik Fs1.wav) i OBNIŻAMY o 1 półton
-            PianoKey(GLFW_KEY_UNKNOWN, "key53", "F1", "dzwieki/F#1v1.wav", false, 0.94387f),
-            // G1 nie ma. Bierzemy F#1 i podnosimy o 1 półton
-            PianoKey(GLFW_KEY_UNKNOWN, "key52", "G1", "dzwieki/F#1v1.wav", false, 1.05946f),
+            // ========================================================
+            // OKTAWA 1
+            // ========================================================
+            PianoKey(GLFW_KEY_UNKNOWN, "key56", "C1",  "dzwieki/C1v1.wav",  false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key93", "C1s", "dzwieki/C1v1.wav",  false, 1.05946f), // C#1 (C1 +1)
+            PianoKey(GLFW_KEY_UNKNOWN, "key55", "D1",  "dzwieki/C1v1.wav",  false, 1.12246f), // D1  (C1 +2)
+            PianoKey(GLFW_KEY_UNKNOWN, "key92", "D1s", "dzwieki/D#1v1.wav", false, 1.0f),     // D#1 (Oryginał)
+            PianoKey(GLFW_KEY_UNKNOWN, "key54", "E1",  "dzwieki/D#1v1.wav", false, 1.05946f), // E1  (D#1 +1)
+            PianoKey(GLFW_KEY_UNKNOWN, "key53", "F1",  "dzwieki/F#1v1.wav", false, 0.94387f), // F1  (F#1 -1)
+            PianoKey(GLFW_KEY_UNKNOWN, "key91", "F1s", "dzwieki/F#1v1.wav", false, 1.0f),     // F#1 (Oryginał)
+            PianoKey(GLFW_KEY_UNKNOWN, "key52", "G1",  "dzwieki/F#1v1.wav", false, 1.05946f), // G1  (F#1 +1)
+            PianoKey(GLFW_KEY_UNKNOWN, "key90", "G1s", "dzwieki/A1v1.wav",  false, 0.94387f), // G#1 (A1 -1)
+            PianoKey(GLFW_KEY_UNKNOWN, "key51", "A1",  "dzwieki/A1v1.wav",  false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key89", "A1s", "dzwieki/A1v1.wav",  false, 1.05946f), // A#1 (A1 +1)
+            PianoKey(GLFW_KEY_UNKNOWN, "key50", "B1",  "dzwieki/A1v1.wav",  false, 1.12246f), // B1  (A1 +2)
 
-            PianoKey(GLFW_KEY_UNKNOWN, "key51", "A1", "dzwieki/A1v1.wav", false, 1.0f),
-            // B1 nie ma. Bierzemy A1 i podnosimy o 2 półtony
-            PianoKey(GLFW_KEY_UNKNOWN, "key50", "B1", "dzwieki/A1v1.wav", false, 1.12246f),
+            // ========================================================
+            // OKTAWA 2
+            // ========================================================
+            PianoKey(GLFW_KEY_UNKNOWN, "key49", "C2",  "dzwieki/C2v1.wav",  false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key88", "C2s", "dzwieki/C2v1.wav",  false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key48", "D2",  "dzwieki/C2v1.wav",  false, 1.12246f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key87", "D2s", "dzwieki/D#2v1.wav", false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key47", "E2",  "dzwieki/D#2v1.wav", false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key46", "F2",  "dzwieki/F#2v1.wav", false, 0.94387f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key86", "F2s", "dzwieki/F#2v1.wav", false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key45", "G2",  "dzwieki/F#2v1.wav", false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key85", "G2s", "dzwieki/A2v1.wav",  false, 0.94387f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key44", "A2",  "dzwieki/A2v1.wav",  false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key84", "A2s", "dzwieki/A2v1.wav",  false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key43", "B2",  "dzwieki/A2v1.wav",  false, 1.12246f),
 
-            // Oktawa 2
-            PianoKey(GLFW_KEY_UNKNOWN, "key49", "C2", "dzwieki/C2v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_UNKNOWN, "key48", "D2", "dzwieki/C2v1.wav", false, 1.12246f),  // Brak D2 -> C2 +2
-            PianoKey(GLFW_KEY_UNKNOWN, "key47", "E2", "dzwieki/D#2v1.wav", false, 1.05946f), // Brak E2 -> D#2 +1
-            PianoKey(GLFW_KEY_UNKNOWN, "key46", "F2", "dzwieki/F#2v1.wav", false, 0.94387f), // Brak F2 -> F#2 -1
-            PianoKey(GLFW_KEY_UNKNOWN, "key45", "G2", "dzwieki/F#2v1.wav", false, 1.05946f), // Brak G2 -> F#2 +1
-            PianoKey(GLFW_KEY_UNKNOWN, "key44", "A2", "dzwieki/A2v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_UNKNOWN, "key43", "B2", "dzwieki/A2v1.wav", false, 1.12246f), // Brak B2 -> A2 +2
+            // ========================================================
+            // OKTAWA 3
+            // ========================================================
+            PianoKey(GLFW_KEY_UNKNOWN, "key42", "C3",  "dzwieki/C3v1.wav",  false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key83", "C3s", "dzwieki/C3v1.wav",  false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key41", "D3",  "dzwieki/C3v1.wav",  false, 1.12246f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key82", "D3s", "dzwieki/D#3v1.wav", false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key40", "E3",  "dzwieki/D#3v1.wav", false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key39", "F3",  "dzwieki/F#3v1.wav", false, 0.94387f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key81", "F3s", "dzwieki/F#3v1.wav", false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key38", "G3",  "dzwieki/F#3v1.wav", false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key80", "G3s", "dzwieki/A3v1.wav",  false, 0.94387f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key37", "A3",  "dzwieki/A3v1.wav",  false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key79", "A3s", "dzwieki/A3v1.wav",  false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key36", "B3",  "dzwieki/A3v1.wav",  false, 1.12246f),
 
-            // Oktawa 3
-            PianoKey(GLFW_KEY_UNKNOWN, "key42", "C3", "dzwieki/C3v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_UNKNOWN, "key41", "D3", "dzwieki/C3v1.wav", false, 1.12246f),  // Brak D2 -> C2 +2
-            PianoKey(GLFW_KEY_UNKNOWN, "key40", "E3", "dzwieki/D#3v1.wav", false, 1.05946f), // Brak E2 -> D#2 +1
-            PianoKey(GLFW_KEY_UNKNOWN, "key39", "F3", "dzwieki/F#3v1.wav", false, 0.94387f), // Brak F2 -> F#2 -1
-            PianoKey(GLFW_KEY_UNKNOWN, "key38", "G3", "dzwieki/F#3v1.wav", false, 1.05946f), // Brak G2 -> F#2 +1
-            PianoKey(GLFW_KEY_UNKNOWN, "key37", "A3", "dzwieki/A3v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_UNKNOWN, "key36", "B3", "dzwieki/A3v1.wav", false, 1.12246f), // Brak B2 -> A2 +2
+            // ========================================================
+            // OKTAWA 4 (Początek klawiszy ręcznych!)
+            // ========================================================
+            PianoKey(GLFW_KEY_UNKNOWN, "key35", "C4",  "dzwieki/C4v1.wav",  false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key78", "C4s", "dzwieki/C4v1.wav",  false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key34", "D4",  "dzwieki/C4v1.wav",  false, 1.12246f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key77", "D4s", "dzwieki/D#4v1.wav", false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key33", "E4",  "dzwieki/D#4v1.wav", false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key32", "F4",  "dzwieki/F#4v1.wav", false, 0.94387f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key76", "F4s", "dzwieki/F#4v1.wav", false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key31", "G4",  "dzwieki/F#4v1.wav", false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key75", "G4s", "dzwieki/A4v1.wav",  false, 0.94387f),
+            // Tutaj zaczynasz grać na klawiaturze komputera:
+            PianoKey(GLFW_KEY_1,       "key30", "A4",  "dzwieki/A4v1.wav",  false, 1.0f),       // Klawisz 1
+            PianoKey(GLFW_KEY_UNKNOWN, "key74", "A4s", "dzwieki/A4v1.wav",  false, 1.05946f),
+            PianoKey(GLFW_KEY_2,       "key29", "B4",  "dzwieki/A4v1.wav",  false, 1.12246f),   // Klawisz 2
 
-            // Oktawa 4
-            PianoKey(GLFW_KEY_UNKNOWN, "key35", "C4", "dzwieki/C4v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_UNKNOWN, "key34", "D4", "dzwieki/C4v1.wav", false, 1.12246f),  // Brak D2 -> C2 +2
-            PianoKey(GLFW_KEY_UNKNOWN, "key33", "E4", "dzwieki/D#4v1.wav", false, 1.05946f), // Brak E2 -> D#2 +1
-            PianoKey(GLFW_KEY_UNKNOWN, "key32", "F4", "dzwieki/F#4v1.wav", false, 0.94387f), // Brak F2 -> F#2 -1
-            PianoKey(GLFW_KEY_UNKNOWN, "key31", "G4", "dzwieki/F#4v1.wav", false, 1.05946f), // Brak G2 -> F#2 +1
-            PianoKey(GLFW_KEY_1, "key30", "A4", "dzwieki/A4v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_2, "key29", "B4", "dzwieki/A4v1.wav", false, 1.12246f), // Brak B2 -> A2 +2
+            // ========================================================
+            // OKTAWA 5 (Ciąg dalszy klawiszy ręcznych)
+            // ========================================================
+            PianoKey(GLFW_KEY_3,       "key28", "C5",  "dzwieki/C5v1.wav",  false, 1.0f),       // Klawisz 3
+            PianoKey(GLFW_KEY_UNKNOWN, "key73", "C5s", "dzwieki/C5v1.wav",  false, 1.05946f),
+            PianoKey(GLFW_KEY_4,       "key27", "D5",  "dzwieki/C5v1.wav",  false, 1.12246f),   // Klawisz 4
+            PianoKey(GLFW_KEY_UNKNOWN, "key72", "D5s", "dzwieki/D#5v1.wav", false, 1.0f),
+            PianoKey(GLFW_KEY_5,       "key26", "E5",  "dzwieki/D#5v1.wav", false, 1.05946f),   // Klawisz 5
+            PianoKey(GLFW_KEY_6,       "key25", "F5",  "dzwieki/F#5v1.wav", false, 0.94387f),   // Klawisz 6
+            PianoKey(GLFW_KEY_UNKNOWN, "key71", "F5s", "dzwieki/F#5v1.wav", false, 1.0f),
+            PianoKey(GLFW_KEY_7,       "key24", "G5",  "dzwieki/F#5v1.wav", false, 1.05946f),   // Klawisz 7
+            PianoKey(GLFW_KEY_UNKNOWN, "key70", "G5s", "dzwieki/A5v1.wav",  false, 0.94387f),
+            PianoKey(GLFW_KEY_8,       "key23", "A5",  "dzwieki/A5v1.wav",  false, 1.0f),       // Klawisz 8
+            PianoKey(GLFW_KEY_UNKNOWN, "key69", "A5s", "dzwieki/A5v1.wav",  false, 1.05946f),
+            PianoKey(GLFW_KEY_9,       "key22", "B5",  "dzwieki/A5v1.wav",  false, 1.12246f),   // Klawisz 9
 
-            // Oktawa 5
-            PianoKey(GLFW_KEY_3, "key28", "C5", "dzwieki/C5v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_4, "key27", "D5", "dzwieki/C5v1.wav", false, 1.12246f),  // Brak D2 -> C2 +2
-            PianoKey(GLFW_KEY_5, "key26", "E5", "dzwieki/D#5v1.wav", false, 1.05946f), // Brak E2 -> D#2 +1
-            PianoKey(GLFW_KEY_6, "key25", "F5", "dzwieki/F#5v1.wav", false, 0.94387f), // Brak F2 -> F#2 -1
-            PianoKey(GLFW_KEY_7, "key24", "G5", "dzwieki/F#5v1.wav", false, 1.05946f), // Brak G2 -> F#2 +1
-            PianoKey(GLFW_KEY_8, "key23", "A5", "dzwieki/A5v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_9, "key22", "B5", "dzwieki/A5v1.wav", false, 1.12246f), // Brak B2 -> A2 +2
+            // ========================================================
+            // OKTAWA 6
+            // ========================================================
+            PianoKey(GLFW_KEY_UNKNOWN, "key21", "C6",  "dzwieki/C6v1.wav",  false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key68", "C6s", "dzwieki/C6v1.wav",  false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key20", "D6",  "dzwieki/C6v1.wav",  false, 1.12246f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key67", "D6s", "dzwieki/D#6v1.wav", false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key19", "E6",  "dzwieki/D#6v1.wav", false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key18", "F6",  "dzwieki/F#6v1.wav", false, 0.94387f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key66", "F6s", "dzwieki/F#6v1.wav", false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key17", "G6",  "dzwieki/F#6v1.wav", false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key65", "G6s", "dzwieki/A6v1.wav",  false, 0.94387f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key16", "A6",  "dzwieki/A6v1.wav",  false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key64", "A6s", "dzwieki/A6v1.wav",  false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key15", "B6",  "dzwieki/A6v1.wav",  false, 1.12246f),
 
-            // Oktawa 6
-            PianoKey(GLFW_KEY_UNKNOWN, "key21", "C6", "dzwieki/C6v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_UNKNOWN, "key20", "D6", "dzwieki/C6v1.wav", false, 1.12246f),  // Brak D2 -> C2 +2
-            PianoKey(GLFW_KEY_UNKNOWN, "key19", "E6", "dzwieki/D#6v1.wav", false, 1.05946f), // Brak E2 -> D#2 +1
-            PianoKey(GLFW_KEY_UNKNOWN, "key18", "F6", "dzwieki/F#6v1.wav", false, 0.94387f), // Brak F2 -> F#2 -1
-            PianoKey(GLFW_KEY_UNKNOWN, "key17", "G6", "dzwieki/F#6v1.wav", false, 1.05946f), // Brak G2 -> F#2 +1
-            PianoKey(GLFW_KEY_UNKNOWN, "key16", "A6", "dzwieki/A6v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_UNKNOWN, "key15", "B6", "dzwieki/A6v1.wav", false, 1.12246f), // Brak B2 -> A2 +2
+            // ========================================================
+            // OKTAWA 7
+            // ========================================================
+            PianoKey(GLFW_KEY_UNKNOWN, "key14", "C7",  "dzwieki/C7v1.wav",  false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key63", "C7s", "dzwieki/C7v1.wav",  false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key13", "D7",  "dzwieki/C7v1.wav",  false, 1.12246f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key62", "D7s", "dzwieki/D#7v1.wav", false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key12", "E7",  "dzwieki/D#7v1.wav", false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key11", "F7",  "dzwieki/F#7v1.wav", false, 0.94387f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key61", "F7s", "dzwieki/F#7v1.wav", false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key10", "G7",  "dzwieki/F#7v1.wav", false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key60", "G7s", "dzwieki/A7v1.wav",  false, 0.94387f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key9",  "A7",  "dzwieki/A7v1.wav",  false, 1.0f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key59", "A7s", "dzwieki/A7v1.wav",  false, 1.05946f),
+            PianoKey(GLFW_KEY_UNKNOWN, "key8",  "B7",  "dzwieki/A7v1.wav",  false, 1.12246f),
 
-            // Oktawa 7
-            PianoKey(GLFW_KEY_UNKNOWN, "key14", "C7", "dzwieki/C7v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_UNKNOWN, "key13", "D7", "dzwieki/C7v1.wav", false, 1.12246f),  // Brak D2 -> C2 +2
-            PianoKey(GLFW_KEY_UNKNOWN, "key12", "E7", "dzwieki/D#7v1.wav", false, 1.05946f), // Brak E2 -> D#2 +1
-            PianoKey(GLFW_KEY_UNKNOWN, "key11", "F7", "dzwieki/F#7v1.wav", false, 0.94387f), // Brak F2 -> F#2 -1
-            PianoKey(GLFW_KEY_UNKNOWN, "key10", "G7", "dzwieki/F#7v1.wav", false, 1.05946f), // Brak G2 -> F#2 +1
-            PianoKey(GLFW_KEY_UNKNOWN, "key9", "A7", "dzwieki/A7v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_UNKNOWN, "key8", "B7", "dzwieki/A7v1.wav", false, 1.12246f), // Brak B2 -> A2 +2
+            // ========================================================
+            // OKTAWA 8 (Ostatni klawisz na fortepianie!)
+            // ========================================================
+            PianoKey(GLFW_KEY_UNKNOWN, "key7",  "C8",  "dzwieki/C8v1.wav",  false, 1.0f)
         };
 
         
