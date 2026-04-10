@@ -19,6 +19,47 @@ int main()
 {
     try
     {
+        // =======================================================
+        // 0. MENU W KONSOLI (MUSI BYĆ PRZED UTWORZENIEM OKNA!)
+        // =======================================================
+
+        // --- SYSTEM AUTOMATYCZNEGO ODTWARZANIA (PIANOLA) ---
+        struct NoteEvent
+        {
+            float startTime;      // Kiedy klawisz ma się wcisnąć (w sekundach)
+            std::string noteName; // Muzyczna nazwa nuty (np. "C4") z pliku txt
+            std::string meshName; // Wyliczona nazwa siatki z modelu (np. "key49")
+            float duration;       // Jak długo ma być wciśnięty
+            bool isPlaying = false;
+            bool isFinished = false;
+        };
+        
+        int song_choise = 0;
+        std::vector<NoteEvent> song; // Przenosimy deklarację wyżej
+        
+        std::cout << "Podaj numer muzyki:\n";
+        std::cout << "1. Oda do radosci - Beethoven\n";
+        std::cout << "2. Walc a-moll - Chopin\n";
+        std::cout << "3. Preludium C-dur - Bach\n";
+        std::cout << "Twoj wybor: ";
+        std::cin >> song_choise;
+
+        std::string filePath = "dzwieki/nuty.txt"; 
+        if (song_choise >= 1 && song_choise <= 3) {
+            switch (song_choise) {
+                case 1: filePath = "dzwieki/Oda_do_radosci.txt"; break;
+                case 2: filePath = "dzwieki/Walc_a-moll.txt"; break;
+                case 3: filePath = "dzwieki/Preludium_C-dur.txt"; break;
+            }
+        } else {
+            std::cout << "UWAGA: Podano zly numer. Tryb bez utworu.\n";
+            filePath = ""; 
+        }
+
+        // =======================================================
+        // 1. INICJALIZACJA GRAFIKI
+        // =======================================================
+
         // 1. Inicjalizacja okna
         Window window(1200, 800, "Projekt Pianino 3D - Final");
 
@@ -163,50 +204,8 @@ int main()
             PianoKey(GLFW_KEY_UNKNOWN, "key8", "B7", "dzwieki/A7v1.wav", false, 1.12246f), // Brak B2 -> A2 +2
         };
 
-        // --- SYSTEM AUTOMATYCZNEGO ODTWARZANIA (PIANOLA) ---
-        struct NoteEvent
-        {
-            float startTime;      // Kiedy klawisz ma się wcisnąć (w sekundach)
-            std::string noteName; // Muzyczna nazwa nuty (np. "C4") z pliku txt
-            std::string meshName; // Wyliczona nazwa siatki z modelu (np. "key49")
-            float duration;       // Jak długo ma być wciśnięty
-            bool isPlaying = false;
-            bool isFinished = false;
-        };
+        
 
-        std::vector<NoteEvent> song;
-        int song_choise = 0;
-        std::cout << "Podaj numer muzyki:\n";
-        std::cout << "1. Oda do radosci - Beethoven\n";
-        std::cout << "2. Walc a-moll - Chopin\n";
-        std::cout << "3. Preludium C-dur - Bach\n";
-        std::cout << "Twoj wybor: ";
-        std::cin >> song_choise;
-
-        // Ustawiamy domyślną ścieżkę na wypadek złego wyboru
-        std::string filePath = "dzwieki/nuty.txt"; 
-
-        if (song_choise >= 1 && song_choise <= 3)
-        {
-            switch (song_choise)
-            {
-            case 1:
-                filePath = "dzwieki/Oda_do_radosci.txt";
-                break;
-            case 2:
-                filePath = "dzwieki/Walc_a-moll.txt";
-                break;
-            case 3:
-                filePath = "dzwieki/Preludium_C-dur.txt";
-                break;
-            }
-        }
-        else
-        {
-            std::cout << "UWAGA: Podano zly numer. Uruchamiam tryb bez utworu (lub z domyslnym plikiem).\n";
-            // Jeśli nie chcesz wczytywać niczego przy złym numerze, możesz np. zostawić pusty string:
-            filePath = ""; 
-        }
 
         // DOPIERO TUTAJ, gdy już wiemy jaki to plik, otwieramy go!
         std::ifstream file(filePath);
@@ -285,6 +284,8 @@ int main()
         {
             std::cout << "INFO: Uruchomiono bez obslugi dzwieku lub brakuje plikow .wav.\n";
         }
+
+        lastFrameTime = glfwGetTime();
 
         while (!window.shouldClose())
         {
