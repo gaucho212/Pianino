@@ -1,35 +1,15 @@
-# Kompilator
 CXX = g++
-CXXFLAGS = -std=c++17 -Wall -Wextra -O2
+CXXFLAGS = -std=c++17 -Wall -O2 -I"C:\msys64\ucrt64\include"
 
+# Linkowanie bibliotek dla środowiska Windows (UCRT64)
+LDFLAGS = -lglew32 -lglfw3 -lopengl32 -lgdi32 -lsfml-audio -lsfml-system -lassimp
+# Zakładam, że takie masz pliki .cpp na podstawie Twoich nagłówków. 
+# Jeśli masz inne, po prostu je tu dopisz (np. glad.c)
+SRC = main.cpp Shader.cpp Model.cpp Texture.cpp Mesh.cpp lodepng.cpp
+OUT = Pianino3D.exe
 
-#BIBLIOTEKI
-LDFLAGS = -lglfw -lGLEW -lGL -lassimp -lsfml-audio -lsfml-system
+all:
+	$(CXX) $(CXXFLAGS) $(SRC) -o $(OUT) $(LDFLAGS)
 
-# Plik wynikowego
-TARGET = piano
-
-
-SRCS = main.cpp Shader.cpp Mesh.cpp Model.cpp lodepng.cpp Texture.cpp
-OBJS = $(SRCS:.cpp=.o)
-
-# Główna reguła budowania
-all: $(TARGET)
-
-# Linkowanie programu
-$(TARGET): $(OBJS)
-	$(CXX) -o $@ $^ $(LDFLAGS)
-
-# Kompilacja poszczególnych plików .cpp do obiektów .o
-%.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
-
-# Czyszczenie 
 clean:
-	rm -f $(OBJS) $(TARGET)
-
-# Reguła pomocnicza do szybkiego odpalenia
-run: $(TARGET)
-	./$(TARGET)
-
-.PHONY: all clean run
+	del $(OUT)
