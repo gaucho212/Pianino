@@ -17,7 +17,7 @@
 
 #include <cstdlib> // Do funkcji std::system()
 
-#include <optional> 
+#include <optional>
 
 // =======================================================
 // DEFINICJE STRUKTUR (GLOBALNE - ZAWSZE WIDOCZNE)
@@ -156,13 +156,13 @@ int main()
         // --- KONFIGURACJA DŹWIĘKÓW I KLAWISZY ---
         struct PianoKey
         {
-            int keyCode;            // Przycisk na klawiaturze (GLFW)
-            std::string meshName;   // Nazwa siatki z logów Assimpa
-            std::string noteName;   // NOWE: Nazwa muzyczna nuty (np. "C4")
-            std::string soundPath;  // Ścieżka do pliku audio
-            bool isPressed;         // Stan wciśnięcia (blokada przed zacięciem)
-            sf::SoundBuffer buffer; // Pamięć RAM dla dźwięku
-            std::optional<sf::Sound> sound;        // Odtwarzacz SFML
+            int keyCode;                    // Przycisk na klawiaturze (GLFW)
+            std::string meshName;           // Nazwa siatki z logów Assimpa
+            std::string noteName;           // NOWE: Nazwa muzyczna nuty (np. "C4")
+            std::string soundPath;          // Ścieżka do pliku audio
+            bool isPressed;                 // Stan wciśnięcia (blokada przed zacięciem)
+            sf::SoundBuffer buffer;         // Pamięć RAM dla dźwięku
+            std::optional<sf::Sound> sound; // Odtwarzacz SFML
 
             float pitch; // NOWE: Zmiana tonacji (domyślnie 1.0 = oryginalny dźwięk)
 
@@ -379,6 +379,51 @@ int main()
 
         lastFrameTime = glfwGetTime();
 
+        // =======================================================
+        // DODATEK: TABLICA NA NUTY (KARTKA PAPIERU) I ZNACZNIKI
+        // =======================================================
+
+        // 1. Definiujemy wierzchołki dla płaskiego prostokąta (Quad)
+        float quadVertices[] = {
+            // Pozycje X,Y,Z      // Normalne           // Tekstury U,V
+            -0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  // Lewa góra
+            -0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 0.0f, // Lewy dół
+            0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,  // Prawy dół
+            0.5f, -0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 0.0f,  // Prawy dół
+            0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,   // Prawa góra
+            -0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f   // Lewa góra
+        };
+
+        GLuint quadVAO, quadVBO;
+        glGenVertexArrays(1, &quadVAO);
+        glGenBuffers(1, &quadVBO);
+        glBindVertexArray(quadVAO);
+        glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
+
+        // Konfiguracja atrybutów zgodna z Twoją klasą Mesh (0=Pos, 1=Norm, 2=Tex)
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(3 * sizeof(float)));
+        glEnableVertexAttribArray(2);
+        glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
+        glBindVertexArray(0);
+
+        // 2. Tworzymy ręcznie dwie tekstury o wielkości 1x1 piksela (Biała i Niebieska)
+        // Dzięki temu używamy Twojego obecnego shadera bez żadnych przeróbek!
+        GLuint whiteTexture, noteTexture;
+
+        glGenTextures(1, &whiteTexture);
+        glBindTexture(GL_TEXTURE_2D, whiteTexture);
+        unsigned char whitePixel[] = {240, 240, 240, 255}; // Lekko szarawy papier
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, whitePixel);
+
+        glGenTextures(1, &noteTexture);
+        glBindTexture(GL_TEXTURE_2D, noteTexture);
+        unsigned char bluePixel[] = {50, 150, 255, 255}; // Błękitny kolor dla granych nut
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, bluePixel);
+
         std::unordered_map<std::string, glm::mat4> localTransforms;
         localTransforms.reserve(100); // Rezerwujemy pamięć na zapas dla 88 klawiszy!
 
@@ -512,10 +557,12 @@ int main()
             myShader.setVec3("dirLightDir", glm::vec3(-0.2f, -1.0f, -0.3f));
             myShader.setVec3("dirLightColor", glm::vec3(0.4f, 0.4f, 0.5f)); // Chłodny błękit/szarość
 
-            // USTAWIENIA ŚWIATŁA 2 (Punktowe - ciepła lampka na pianinie)
-            // Ustawiamy lampkę blisko modelu (np. trochę wyżej na osi Y i przesunięte w lewo na X)
-            myShader.setVec3("pointLightPos", glm::vec3(-1.0f, 1.5f, 1.0f));
-            myShader.setVec3("pointLightColor", glm::vec3(1.0f, 0.8f, 0.4f)); // Ciepły żółty/pomarańcz
+            // USTAWIENIA ŚWIATŁA 2 (Punktowe - ciepła lampka nad klawiaturą)
+            // Przesuwamy lampkę nad klawisze (X = 0.0), wyżej (Y = 3.0) i odsuwamy mocno od kartki w stronę gracza (Z = 4.0)
+            myShader.setVec3("pointLightPos", glm::vec3(0.0f, 3.0f, 4.0f));
+            
+            // Lekko przyciemniamy "kulę ognia", by dawała bardziej miękkie, klimatyczne światło
+            myShader.setVec3("pointLightColor", glm::vec3(0.8f, 0.6f, 0.3f));
 
             // Tworzenie macierzy Modelu (M)
             glm::mat4 M = glm::mat4(1.0f);
@@ -585,7 +632,8 @@ int main()
                                 {
                                     if (key.meshName == note.meshName)
                                     {
-                                        if (key.sound) key.sound->play(); 
+                                        if (key.sound)
+                                            key.sound->play();
                                         break;
                                     }
                                 }
@@ -632,7 +680,7 @@ int main()
                         {
                             if (soundSystemWorking && key.sound)
                             {
-                                key.sound->play(); 
+                                key.sound->play();
                             }
                             key.isPressed = true;
                         }
@@ -709,6 +757,95 @@ int main()
 
             // Rysowanie modelu
             myModel.Draw(myShader, M, localTransforms);
+
+           // ==========================================
+            // RYSOWANIE KARTKI (PAPIERU) ZA FORTEPIANEM
+            // ==========================================
+
+            // 1. Definiujemy "bazę" dla położenia i obrotu kartki.
+            // Dzięki temu nuty będą mogły "odziedziczyć" ten sam kąt i pozycję!
+            glm::mat4 paperBaseM = glm::mat4(1.0f);
+            paperBaseM = glm::translate(paperBaseM, glm::vec3(-2.0f, 1.5f, 0.0f)); // Twoja znaleziona pozycja
+            paperBaseM = glm::rotate(paperBaseM, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // Twój obrót o 90 stopni
+
+            // 2. Rysujemy wielką, białą tablicę
+            glm::mat4 boardM = paperBaseM;
+            boardM = glm::scale(boardM, glm::vec3(5.0f, 2.0f, 1.0f)); // Szerokość: 5.0, Wysokość: 2.0, Z płaskie
+
+            myShader.setMat4("M", boardM);
+
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, whiteTexture); // Bindujemy "papier"
+
+            glBindVertexArray(quadVAO);
+            glDrawArrays(GL_TRIANGLES, 0, 6);
+
+            // ==========================================
+            // WIZUALIZACJA AKTUALNIE GRANYCH NUT
+            // ==========================================
+
+            glBindTexture(GL_TEXTURE_2D, noteTexture); // Zmieniamy kolor pędzla na błękitny
+
+            // A) Obsługa wizualizacji dla automatycznego odtwarzania (Pianola)
+            if (isAutoPlaying)
+            {
+                for (auto &note : song)
+                {
+                    if (note.isPlaying)
+                    {
+                        // Szukamy indeksu klawisza (0 - 87)
+                        int keyIdx = -1;
+                        for (size_t i = 0; i < keys.size(); i++)
+                        {
+                            if (keys[i].meshName == note.meshName)
+                            {
+                                keyIdx = i;
+                                break;
+                            }
+                        }
+
+                        if (keyIdx != -1)
+                        {
+                            float percent = (float)keyIdx / (keys.size() - 1);
+                            
+                            // Szerokość kartki to 5.0, więc wyliczamy lokalną pozycję X od -2.5 (lewo) do 2.5 (prawo)
+                            float localX = -2.5f + (percent * 5.0f);
+
+                            glm::mat4 noteM = paperBaseM; // Nuta dziedziczy pozycję i OBRÓT od kartki!
+                            
+                            // Przesuwamy nutę wzdłuż lokalnego X kartki, oraz tyci-tyci do przodu na osi Z (0.01f), 
+                            // aby nuta "leżała" na papierze i nie było tzw. Z-fightingu (migotania pikseli)
+                            noteM = glm::translate(noteM, glm::vec3(localX, 0.0f, 0.01f)); 
+                            noteM = glm::scale(noteM, glm::vec3(0.04f, 2.0f, 1.0f)); // 0.04f to szerokość paska nuty
+
+                            myShader.setMat4("M", noteM);
+                            glDrawArrays(GL_TRIANGLES, 0, 6);
+                        }
+                    }
+                }
+            }
+            // B) Obsługa wizualizacji dla ręcznego grania na klawiaturze
+            else
+            {
+                for (size_t i = 0; i < keys.size(); i++)
+                {
+                    if (keys[i].isPressed)
+                    {
+                        float percent = (float)i / (keys.size() - 1);
+                        float localX = -2.5f + (percent * 5.0f);
+
+                        glm::mat4 noteM = paperBaseM; // Dziedziczymy obrót kartki
+                        
+                        noteM = glm::translate(noteM, glm::vec3(localX, 0.0f, 0.01f));
+                        noteM = glm::scale(noteM, glm::vec3(0.04f, 2.0f, 1.0f));
+
+                        myShader.setMat4("M", noteM);
+                        glDrawArrays(GL_TRIANGLES, 0, 6);
+                    }
+                }
+            }
+
+            glBindVertexArray(0); // Odpinamy VAO na koniec klatki
 
             // Zamiana buforów i przetwarzanie zdarzeń systemu okien
             window.swapBuffers();
