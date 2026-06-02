@@ -15,7 +15,7 @@
 #include <fstream>
 #include <sstream>
 
-#include <cstdlib> // Do funkcji std::system()
+#include <cstdlib> 
 
 #include <optional>
 
@@ -46,7 +46,7 @@ int main()
         std::cout << "1. Oda do radosci - Beethoven\n";
         std::cout << "2. Walc a-moll - Chopin\n";
         std::cout << "3. Preludium C-dur - Bach\n";
-        std::cout << "4. [NOWOSC] Zagraj wlasny plik MIDI (.mid)\n";
+        std::cout << "4. Zagraj wlasny plik MIDI (.mid)\n";
         std::cout << "5. Załadowany plik nuty.txt\n";
         std::cout << "Twoj wybor: ";
         std::cin >> song_choise;
@@ -354,7 +354,7 @@ int main()
         float playbackTime = 0.0f;
         bool pKeyPressed = false; // Blokada dla klawisza 'P'
 
-        // ZABEZPIECZENIE DLA WSL: Wyłączamy spamowanie błędami SFML w konsoli
+        // Wyłączamy spamowanie błędami SFML w konsoli
         sf::err().rdbuf(NULL);
         bool soundSystemWorking = true;
 
@@ -363,8 +363,8 @@ int main()
         {
             if (key.buffer.loadFromFile(key.soundPath))
             {
-                key.sound.emplace(key.buffer);  // SFML 3.0: Tworzymy dźwięk i od razu dajemy mu bufor
-                key.sound->setPitch(key.pitch); // Zauważ strzałkę "->" zamiast kropki!
+                key.sound.emplace(key.buffer);  //Tworzymy dźwięk i od razu dajemy mu bufor
+                key.sound->setPitch(key.pitch); 
             }
             else
             {
@@ -426,6 +426,10 @@ int main()
 
         std::unordered_map<std::string, glm::mat4> localTransforms;
         localTransforms.reserve(100); // Rezerwujemy pamięć na zapas dla 88 klawiszy!
+
+        // --- ZMIENNE DO TRYBU SIATKI (WIREFRAME) ---
+        bool isWireframeMode = false;
+        bool rKeyPressed = false;
 
         while (!window.shouldClose())
         {
@@ -715,6 +719,19 @@ int main()
             {
                 oKeyPressed = false; // Klawisz puszczony, zdejmujemy blokadę
             }
+            // --- OBSŁUGA TRYBU ROBOCZEGO (Klawisz 'R') ---
+            if (window.isKeyPressed(GLFW_KEY_R))
+            {
+                if (!rKeyPressed)
+                {
+                    isWireframeMode = !isWireframeMode; // Zmieniamy stan na przeciwny
+                    rKeyPressed = true;                 // Blokujemy, żeby nie migotało
+                }
+            }
+            else
+            {
+                rKeyPressed = false; // Zdejmujemy blokadę po puszczeniu klawisza
+            }
 
             // Płynna zmiana kąta na podstawie stanu
             if (isPianoOpen)
@@ -755,8 +772,22 @@ int main()
             myShader.setVec3("viewPos", cameraPos); // Bardzo ważne dla oświetlenia Blinna-Phonga!
             myShader.setMat4("P", P);               // P wysyłamy jak zwykle
 
+            // ==========================================
+            // RYSOWANIE FORTEPIANU
+            // ==========================================
+            
+            // Jeśli tryb roboczy jest włączony, każemy OpenGL rysować same linie
+            if (isWireframeMode) 
+            {
+                glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+            }
+
             // Rysowanie modelu
             myModel.Draw(myShader, M, localTransforms);
+
+            // BARDZO WAŻNE: Zawsze przywracamy tryb wypełnienia (FILL) zaraz po narysowaniu fortepianu!
+            // Dzięki temu nasza tablica i nuty z tyłu nadal będą rysowane jako pełne prostokąty, a nie siatki.
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
            // ==========================================
             // RYSOWANIE KARTKI (PAPIERU) ZA FORTEPIANEM

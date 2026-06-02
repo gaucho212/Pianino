@@ -18,9 +18,6 @@ void main() {
     FragPos = vec3(M * vec4(aPos, 1.0));
     
     // Obliczamy macierz normalnych. 
-    // Dlaczego nie samo "aNormal"? Ponieważ jeśli przeskalujesz model w C++ nieproporcjonalnie 
-    // (np. spłaszczysz go), zwykłe wektory normalne się wykrzywią i oświetlenie będzie zepsute.
-    // Używamy odwróconej, transponowanej macierzy 3x3, aby temu zapobiec.
     Normal = mat3(transpose(inverse(M))) * aNormal;  
     TexCoords = aTexCoords; 
     
