@@ -5,32 +5,32 @@ Texture::Texture(const std::string& path) {
     std::vector<unsigned char> image;
     unsigned width, height;
     
-    // 1. Dekodowanie pliku za pomocą LodePNG
+    // Dekodowanie pliku za pomocą LodePNG
     unsigned error = lodepng::decode(image, width, height, path);
 
     if (error) {
         throw std::runtime_error("Blad wczytywania tekstury " + path + ": " + lodepng_error_text(error));
     }
 
-    // 2. Generowanie bufora tekstury w OpenGL
+    // Generowanie bufora tekstury 
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
-    // 3. Przesłanie pikseli z RAM na GPU
+    // Przesłanie pikseli z RAM na GPU
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image.data());
 
-    // 4. Automatyczne generowanie Mipmap (mniejszych wersji tekstury dla obiektów w oddali)
+    // Automatyczne generowanie Mipmap 
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    // 5. Ustawienia filtrowania (Trilinearing - najlepsza jakość z wykładu)
+    // Ustawienia filtrowania 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     
-    // Ustawienia zawijania (powtarzanie tekstury)
+    // Ustawienia zawijania
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    // 6. Odpięcie tekstury
+    // Odpięcie tekstury
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 

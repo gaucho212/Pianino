@@ -7,7 +7,7 @@ in vec3 Normal;
 in vec2 TexCoords; // Odbieramy UV
 
 uniform vec3 viewPos;
-uniform sampler2D tex; // Zmienna reprezentująca nasz obrazek
+uniform sampler2D tex; // Zmienna reprezentująca obrazek
 
 uniform vec3 dirLightDir;
 uniform vec3 dirLightColor;
@@ -19,12 +19,12 @@ void main() {
     vec3 texColor = texture(tex, TexCoords).rgb;
     
     if (texColor == vec3(0.0, 0.0, 0.0)) {
-        texColor = vec3(0.2, 0.2, 0.2); // Wnętrze pianina będzie ciemnoszare
+        texColor = vec3(0.2, 0.2, 0.2); 
     }
     vec3 norm = normalize(Normal);
     vec3 viewDir = normalize(viewPos - FragPos);
 
-    // --- Światło Kierunkowe ---
+    // Światło Kierunkowe
     vec3 lightDir1 = normalize(-dirLightDir);
     float ambientStrength = 0.15;
     vec3 ambient1 = ambientStrength * dirLightColor;
@@ -38,7 +38,7 @@ void main() {
 
     vec3 resultDirLight = ambient1 + diffuse1 + specular1;
 
-    // --- Światło Punktowe ---
+    // Światło Punktowe
     vec3 lightDir2 = normalize(pointLightPos - FragPos);
     float diff2 = max(dot(norm, lightDir2), 0.0);
     vec3 diffuse2 = diff2 * pointLightColor;
@@ -51,8 +51,7 @@ void main() {
     float attenuation = 1.0 / (1.0 + 0.09 * distance + 0.032 * (distance * distance));
     vec3 resultPointLight = (diffuse2 + specular2) * attenuation;
 
-    // --- WYNIK ---
-    // Mnożymy sumę światła przez kolor wyciągnięty z TEKSTURY, a nie stały wektor!
+    // Wynik koncowyt
     vec3 finalResult = (resultDirLight + resultPointLight) * texColor;
     
     FragColor = vec4(finalResult, 1.0);

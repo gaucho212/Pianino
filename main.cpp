@@ -19,14 +19,12 @@
 
 #include <optional>
 
-// =======================================================
-// DEFINICJE STRUKTUR (GLOBALNE - ZAWSZE WIDOCZNE)
-// =======================================================
+// Globalna definicja struktury do automatycznego grania
 struct NoteEvent
 {
-    float startTime;      // Kiedy klawisz ma się wcisnąć (w sekundach)
-    std::string noteName; // Muzyczna nazwa nuty (np. "C4") z pliku txt
-    std::string meshName; // Wyliczona nazwa siatki z modelu (np. "key49")
+    float startTime;      // Kiedy klawisz ma się wcisnąć 
+    std::string noteName; // Muzyczna nazwa nuty z pliku txt
+    std::string meshName; // Wyliczona nazwa siatki z modelu 
     float duration;       // Jak długo ma być wciśnięty
     bool isPlaying = false;
     bool isFinished = false;
@@ -36,9 +34,7 @@ int main()
 {
     try
     {
-        // =======================================================
-        // 1. MENU W KONSOLI (MUSI BYĆ PRZED UTWORZENIEM OKNA!)
-        // =======================================================
+        //Menu konsoli
         int song_choise = 0;
         std::vector<NoteEvent> song;
 
@@ -59,11 +55,11 @@ int main()
             std::cout << "Podaj nazwe pliku MIDI (musi byc w folderze projektu, np. piosenka.mid): ";
             std::cin >> midiName;
 
-            // Budujemy komendę do terminala WSL
+            // Budujemy komendę do terminala 
             std::string command = "python konwerter.py " + midiName + " dzwieki/nuty.txt";
             std::cout << "Konwertuje plik " << midiName << "...\n";
 
-            // C++ odpala skrypt w Pythonie!
+            // Skrypt w pythonie
             int result = std::system(command.c_str());
 
             if (result == 0)
@@ -101,37 +97,34 @@ int main()
             filePath = "";
         }
 
-        // =======================================================
-        // 2. INICJALIZACJA GRAFIKI
-        // =======================================================
 
-        // 1. Inicjalizacja okna
+        // Inicjalizacja okna
         Window window(1200, 800, "Projekt Pianino 3D - Final");
 
-        // 2. Ładowanie shaderów z plików
+        // Ładowanie shaderów z plików
         Shader myShader("shader.vert", "shader.frag");
 
-        // 3. Ładowanie modelu 3D
+        // Ładowanie modelu 3D
         Model myModel("Tekstury_objekty/Piano.obj");
 
-        // Mówimy shaderowi, że zmienna "tex" używa slotu numer 0
+        //zmienna "tex" używa slotu numer 0
         myShader.use();
 
         // Zmienne kamery
         glm::vec3 cameraPos = glm::vec3(3.0f, 1.0f, 0.0f);     // Gdzie stoimy
-        glm::vec3 cameraFront = glm::vec3(0.0f, -0.3f, -1.0f); // Gdzie patrzymy (lekko w dół i w głąb ekranu)
+        glm::vec3 cameraFront = glm::vec3(0.0f, -0.3f, -1.0f); // Gdzie patrzymy 
         glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);      // Gdzie jest "sufit"
 
         float cameraSpeed = 3.5f; // Szybkość poruszania się
 
-        // ZMIENNE DO MYSZKI I KĄTÓW EULERA
-        window.disableCursor(); // Ukrywamy i blokujemy kursor!
+        // Zmienne myszy i katow eulera do poruszania sie
+        window.disableCursor(); // Ukrywamy i blokujemy kursor
 
-        float yaw = -180.0f;  // Yaw na start jestsmy tylem sie sie odwracamy
-        float pitch = -20.0f; // Na starcie patrzymy w dol fortepianu
+        float yaw = -180.0f;  
+        float pitch = -20.0f;
 
-        double lastX = 600.0, lastY = 400.0; // Środek okna (zakładając 1200x800)
-        bool firstMouse = true;              // Flaga, żeby kamera nie "skoczyła" przy pierwszym ruchu
+        double lastX = 600.0, lastY = 400.0; // Środek okna 
+        bool firstMouse = true;              // Flaga, żeby kamera nie skoczyła przy pierwszym ruchu
 
         // Zmienne obrotu
         float angleX = 0.0f;
@@ -139,67 +132,62 @@ int main()
         float rotationSpeed = 0.5f;
         float lastFrameTime = glfwGetTime();
 
-        // Zmienna przechowująca nasz Field of View (domyślnie 45 stopni)
+        // Zmienna przechowująca nasz Field of View 
         float fov = 45.0f;
 
-        // --- ZMIENNE DO ANIMACJI KLAPY PIANINA ---
-        bool isPianoOpen = false;     // Stan: otwarte/zamknięte
+        // Zmienne do animacji otwierania klapy fortepianu
+        bool isPianoOpen = false;     
         float currentLidAngle = 0.0f; // Aktualny kąt otwarcia
         float maxLidAngle = 55.0f;    // Maksymalny kąt otwarcia w stopniach
-        float lidSpeed = 80.0f;       // Prędkość otwierania (stopnie na sekundę)
-        bool oKeyPressed = false;     // Blokada (żeby klawisz nie "migał")
+        float lidSpeed = 80.0f;       // Prędkość otwierania 
+        bool oKeyPressed = false;     
 
         // Obliczanie fps
         float time_second = 0.0f;
         int frames = 0;
 
-        // --- KONFIGURACJA DŹWIĘKÓW I KLAWISZY ---
+        // Konfiguracja dzwiekow i klawiszy 
         struct PianoKey
         {
-            int keyCode;                    // Przycisk na klawiaturze (GLFW)
+            int keyCode;                    // Przycisk na klawiaturze 
             std::string meshName;           // Nazwa siatki z logów Assimpa
-            std::string noteName;           // NOWE: Nazwa muzyczna nuty (np. "C4")
+            std::string noteName;           // Nazwa muzyczna nuty 
             std::string soundPath;          // Ścieżka do pliku audio
-            bool isPressed;                 // Stan wciśnięcia (blokada przed zacięciem)
+            bool isPressed;                 
             sf::SoundBuffer buffer;         // Pamięć RAM dla dźwięku
             std::optional<sf::Sound> sound; // Odtwarzacz SFML
 
-            float pitch; // NOWE: Zmiana tonacji (domyślnie 1.0 = oryginalny dźwięk)
+            float pitch; //Zmiana tonacji 
 
-            // Zaktualizowany konstruktor z parametrem pitch (domyślnie 1.0f)
             PianoKey(int k, std::string m, std::string n, std::string s, bool p, float pt = 1.0f)
                 : keyCode(k), meshName(m), noteName(n), soundPath(s), isPressed(p), pitch(pt) {}
         };
 
-        // Tworzenie listy klawiszy z nazwami nut!
-        // (Możesz tu wpisać dowolne nazwy, np. "C4", "C#4", "D4" itd.)
+        // Tworzenie listy klawiszy z nazwami nut
         std::vector<PianoKey> keys = {
-            // ========================================================
-            // OKTAWA 0 (Subkontra) - Najniższe basy
-            // ========================================================
+            
+            
             PianoKey(GLFW_KEY_UNKNOWN, "key58", "A0", "dzwieki/A0v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_UNKNOWN, "key94", "A0s", "dzwieki/A0v1.wav", false, 1.05946f), // A#0 (A0 +1)
-            PianoKey(GLFW_KEY_UNKNOWN, "key57", "B0", "dzwieki/A0v1.wav", false, 1.12246f),  // B0  (A0 +2)
+            PianoKey(GLFW_KEY_UNKNOWN, "key94", "A0s", "dzwieki/A0v1.wav", false, 1.05946f), 
+            PianoKey(GLFW_KEY_UNKNOWN, "key57", "B0", "dzwieki/A0v1.wav", false, 1.12246f),  
 
-            // ========================================================
-            // OKTAWA 1
-            // ========================================================
+            
+            
             PianoKey(GLFW_KEY_UNKNOWN, "key56", "C1", "dzwieki/C1v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_UNKNOWN, "key93", "C1s", "dzwieki/C1v1.wav", false, 1.05946f), // C#1 (C1 +1)
-            PianoKey(GLFW_KEY_UNKNOWN, "key55", "D1", "dzwieki/C1v1.wav", false, 1.12246f),  // D1  (C1 +2)
-            PianoKey(GLFW_KEY_UNKNOWN, "key92", "D1s", "dzwieki/D#1v1.wav", false, 1.0f),    // D#1 (Oryginał)
-            PianoKey(GLFW_KEY_UNKNOWN, "key54", "E1", "dzwieki/D#1v1.wav", false, 1.05946f), // E1  (D#1 +1)
-            PianoKey(GLFW_KEY_UNKNOWN, "key53", "F1", "dzwieki/F#1v1.wav", false, 0.94387f), // F1  (F#1 -1)
-            PianoKey(GLFW_KEY_UNKNOWN, "key91", "F1s", "dzwieki/F#1v1.wav", false, 1.0f),    // F#1 (Oryginał)
-            PianoKey(GLFW_KEY_UNKNOWN, "key52", "G1", "dzwieki/F#1v1.wav", false, 1.05946f), // G1  (F#1 +1)
-            PianoKey(GLFW_KEY_UNKNOWN, "key90", "G1s", "dzwieki/A1v1.wav", false, 0.94387f), // G#1 (A1 -1)
+            PianoKey(GLFW_KEY_UNKNOWN, "key93", "C1s", "dzwieki/C1v1.wav", false, 1.05946f), 
+            PianoKey(GLFW_KEY_UNKNOWN, "key55", "D1", "dzwieki/C1v1.wav", false, 1.12246f),  
+            PianoKey(GLFW_KEY_UNKNOWN, "key92", "D1s", "dzwieki/D#1v1.wav", false, 1.0f),    
+            PianoKey(GLFW_KEY_UNKNOWN, "key54", "E1", "dzwieki/D#1v1.wav", false, 1.05946f), 
+            PianoKey(GLFW_KEY_UNKNOWN, "key53", "F1", "dzwieki/F#1v1.wav", false, 0.94387f), 
+            PianoKey(GLFW_KEY_UNKNOWN, "key91", "F1s", "dzwieki/F#1v1.wav", false, 1.0f),    
+            PianoKey(GLFW_KEY_UNKNOWN, "key52", "G1", "dzwieki/F#1v1.wav", false, 1.05946f), 
+            PianoKey(GLFW_KEY_UNKNOWN, "key90", "G1s", "dzwieki/A1v1.wav", false, 0.94387f), 
             PianoKey(GLFW_KEY_UNKNOWN, "key51", "A1", "dzwieki/A1v1.wav", false, 1.0f),
-            PianoKey(GLFW_KEY_UNKNOWN, "key89", "A1s", "dzwieki/A1v1.wav", false, 1.05946f), // A#1 (A1 +1)
-            PianoKey(GLFW_KEY_UNKNOWN, "key50", "B1", "dzwieki/A1v1.wav", false, 1.12246f),  // B1  (A1 +2)
+            PianoKey(GLFW_KEY_UNKNOWN, "key89", "A1s", "dzwieki/A1v1.wav", false, 1.05946f), 
+            PianoKey(GLFW_KEY_UNKNOWN, "key50", "B1", "dzwieki/A1v1.wav", false, 1.12246f),  
 
-            // ========================================================
-            // OKTAWA 2
-            // ========================================================
+            
+            
             PianoKey(GLFW_KEY_UNKNOWN, "key49", "C2", "dzwieki/C2v1.wav", false, 1.0f),
             PianoKey(GLFW_KEY_UNKNOWN, "key88", "C2s", "dzwieki/C2v1.wav", false, 1.05946f),
             PianoKey(GLFW_KEY_UNKNOWN, "key48", "D2", "dzwieki/C2v1.wav", false, 1.12246f),
@@ -213,9 +201,8 @@ int main()
             PianoKey(GLFW_KEY_UNKNOWN, "key84", "A2s", "dzwieki/A2v1.wav", false, 1.05946f),
             PianoKey(GLFW_KEY_UNKNOWN, "key43", "B2", "dzwieki/A2v1.wav", false, 1.12246f),
 
-            // ========================================================
-            // OKTAWA 3
-            // ========================================================
+            
+            
             PianoKey(GLFW_KEY_UNKNOWN, "key42", "C3", "dzwieki/C3v1.wav", false, 1.0f),
             PianoKey(GLFW_KEY_UNKNOWN, "key83", "C3s", "dzwieki/C3v1.wav", false, 1.05946f),
             PianoKey(GLFW_KEY_UNKNOWN, "key41", "D3", "dzwieki/C3v1.wav", false, 1.12246f),
@@ -229,9 +216,8 @@ int main()
             PianoKey(GLFW_KEY_UNKNOWN, "key79", "A3s", "dzwieki/A3v1.wav", false, 1.05946f),
             PianoKey(GLFW_KEY_UNKNOWN, "key36", "B3", "dzwieki/A3v1.wav", false, 1.12246f),
 
-            // ========================================================
-            // OKTAWA 4 (Początek klawiszy ręcznych!)
-            // ========================================================
+            
+            
             PianoKey(GLFW_KEY_UNKNOWN, "key35", "C4", "dzwieki/C4v1.wav", false, 1.0f),
             PianoKey(GLFW_KEY_UNKNOWN, "key78", "C4s", "dzwieki/C4v1.wav", false, 1.05946f),
             PianoKey(GLFW_KEY_UNKNOWN, "key34", "D4", "dzwieki/C4v1.wav", false, 1.12246f),
@@ -241,14 +227,12 @@ int main()
             PianoKey(GLFW_KEY_UNKNOWN, "key76", "F4s", "dzwieki/F#4v1.wav", false, 1.0f),
             PianoKey(GLFW_KEY_UNKNOWN, "key31", "G4", "dzwieki/F#4v1.wav", false, 1.05946f),
             PianoKey(GLFW_KEY_UNKNOWN, "key75", "G4s", "dzwieki/A4v1.wav", false, 0.94387f),
-            // Tutaj zaczynasz grać na klawiaturze komputera:
             PianoKey(GLFW_KEY_1, "key30", "A4", "dzwieki/A4v1.wav", false, 1.0f), // Klawisz 1
             PianoKey(GLFW_KEY_UNKNOWN, "key74", "A4s", "dzwieki/A4v1.wav", false, 1.05946f),
             PianoKey(GLFW_KEY_2, "key29", "B4", "dzwieki/A4v1.wav", false, 1.12246f), // Klawisz 2
 
-            // ========================================================
-            // OKTAWA 5 (Ciąg dalszy klawiszy ręcznych)
-            // ========================================================
+            
+            
             PianoKey(GLFW_KEY_3, "key28", "C5", "dzwieki/C5v1.wav", false, 1.0f), // Klawisz 3
             PianoKey(GLFW_KEY_UNKNOWN, "key73", "C5s", "dzwieki/C5v1.wav", false, 1.05946f),
             PianoKey(GLFW_KEY_4, "key27", "D5", "dzwieki/C5v1.wav", false, 1.12246f), // Klawisz 4
@@ -262,9 +246,8 @@ int main()
             PianoKey(GLFW_KEY_UNKNOWN, "key69", "A5s", "dzwieki/A5v1.wav", false, 1.05946f),
             PianoKey(GLFW_KEY_9, "key22", "B5", "dzwieki/A5v1.wav", false, 1.12246f), // Klawisz 9
 
-            // ========================================================
-            // OKTAWA 6
-            // ========================================================
+            
+            
             PianoKey(GLFW_KEY_UNKNOWN, "key21", "C6", "dzwieki/C6v1.wav", false, 1.0f),
             PianoKey(GLFW_KEY_UNKNOWN, "key68", "C6s", "dzwieki/C6v1.wav", false, 1.05946f),
             PianoKey(GLFW_KEY_UNKNOWN, "key20", "D6", "dzwieki/C6v1.wav", false, 1.12246f),
@@ -278,9 +261,8 @@ int main()
             PianoKey(GLFW_KEY_UNKNOWN, "key64", "A6s", "dzwieki/A6v1.wav", false, 1.05946f),
             PianoKey(GLFW_KEY_UNKNOWN, "key15", "B6", "dzwieki/A6v1.wav", false, 1.12246f),
 
-            // ========================================================
-            // OKTAWA 7
-            // ========================================================
+            
+            
             PianoKey(GLFW_KEY_UNKNOWN, "key14", "C7", "dzwieki/C7v1.wav", false, 1.0f),
             PianoKey(GLFW_KEY_UNKNOWN, "key63", "C7s", "dzwieki/C7v1.wav", false, 1.05946f),
             PianoKey(GLFW_KEY_UNKNOWN, "key13", "D7", "dzwieki/C7v1.wav", false, 1.12246f),
@@ -294,12 +276,10 @@ int main()
             PianoKey(GLFW_KEY_UNKNOWN, "key59", "A7s", "dzwieki/A7v1.wav", false, 1.05946f),
             PianoKey(GLFW_KEY_UNKNOWN, "key8", "B7", "dzwieki/A7v1.wav", false, 1.12246f),
 
-            // ========================================================
-            // OKTAWA 8 (Ostatni klawisz na fortepianie!)
-            // ========================================================
+            
+            
             PianoKey(GLFW_KEY_UNKNOWN, "key7", "C8", "dzwieki/C8v1.wav", false, 1.0f)};
 
-        // DOPIERO TUTAJ, gdy już wiemy jaki to plik, otwieramy go!
         std::ifstream file(filePath);
 
         if (file.is_open())
@@ -311,7 +291,7 @@ int main()
                 float start, duration;
                 std::string readNote;
 
-                // Odczytujemy: CzasStartu, NazwaNuty, CzasTrwania
+                // CzasStartu, NazwaNuty, CzasTrwania
                 if (iss >> start >> readNote >> duration)
                 {
                     NoteEvent note;
@@ -320,17 +300,17 @@ int main()
                     note.duration = duration;
                     note.meshName = ""; // Domyślnie puste
 
-                    // Szukamy siatki 3D przypisanej do tej nuty
+                    // Szukamy siatki przypisanej do tej nuty
                     for (const auto &key : keys)
                     {
                         if (key.noteName == readNote)
                         {
                             note.meshName = key.meshName;
-                            break; // Znaleziono, przerywamy szukanie
+                            break;
                         }
                     }
 
-                    // Zapisujemy nutę tylko wtedy, gdy program rozpoznał jej nazwę
+                    // Zapisujemy nutę 
                     if (note.meshName != "")
                     {
                         song.push_back(note);
@@ -352,7 +332,7 @@ int main()
         // Zmienne sterujące trybami gry
         bool isAutoPlaying = false;
         float playbackTime = 0.0f;
-        bool pKeyPressed = false; // Blokada dla klawisza 'P'
+        bool pKeyPressed = false; 
 
         // Wyłączamy spamowanie błędami SFML w konsoli
         sf::err().rdbuf(NULL);
@@ -363,7 +343,7 @@ int main()
         {
             if (key.buffer.loadFromFile(key.soundPath))
             {
-                key.sound.emplace(key.buffer);  //Tworzymy dźwięk i od razu dajemy mu bufor
+                key.sound.emplace(key.buffer);  //Tworzymy dźwięk i dajemy mu bufor
                 key.sound->setPitch(key.pitch); 
             }
             else
@@ -379,11 +359,9 @@ int main()
 
         lastFrameTime = glfwGetTime();
 
-        // =======================================================
-        // DODATEK: TABLICA NA NUTY (KARTKA PAPIERU) I ZNACZNIKI
-        // =======================================================
+        //Tablica na nuty
 
-        // 1. Definiujemy wierzchołki dla płaskiego prostokąta (Quad)
+        //Definiujemy wierzchołki dla płaskiego prostokąta 
         float quadVertices[] = {
             // Pozycje X,Y,Z      // Normalne           // Tekstury U,V
             -0.5f, 0.5f, 0.0f, 0.0f, 0.0f, 1.0f, 0.0f, 1.0f,  // Lewa góra
@@ -401,7 +379,7 @@ int main()
         glBindBuffer(GL_ARRAY_BUFFER, quadVBO);
         glBufferData(GL_ARRAY_BUFFER, sizeof(quadVertices), &quadVertices, GL_STATIC_DRAW);
 
-        // Konfiguracja atrybutów zgodna z Twoją klasą Mesh (0=Pos, 1=Norm, 2=Tex)
+        // Konfiguracja atrybutów zgodna z klasą Mesh 
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)0);
         glEnableVertexAttribArray(1);
@@ -410,24 +388,23 @@ int main()
         glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void *)(6 * sizeof(float)));
         glBindVertexArray(0);
 
-        // 2. Tworzymy ręcznie dwie tekstury o wielkości 1x1 piksela (Biała i Niebieska)
-        // Dzięki temu używamy Twojego obecnego shadera bez żadnych przeróbek!
+        //Dwie tekstury o wielkości 1x1 piksela (Biała i Niebieska)        
         GLuint whiteTexture, noteTexture;
 
         glGenTextures(1, &whiteTexture);
         glBindTexture(GL_TEXTURE_2D, whiteTexture);
-        unsigned char whitePixel[] = {240, 240, 240, 255}; // Lekko szarawy papier
+        unsigned char whitePixel[] = {240, 240, 240, 255};
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, whitePixel);
 
         glGenTextures(1, &noteTexture);
         glBindTexture(GL_TEXTURE_2D, noteTexture);
-        unsigned char bluePixel[] = {50, 150, 255, 255}; // Błękitny kolor dla granych nut
+        unsigned char bluePixel[] = {50, 150, 255, 255}; 
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 1, 1, 0, GL_RGBA, GL_UNSIGNED_BYTE, bluePixel);
 
         std::unordered_map<std::string, glm::mat4> localTransforms;
-        localTransforms.reserve(100); // Rezerwujemy pamięć na zapas dla 88 klawiszy!
+        localTransforms.reserve(100); // Rezerwujemy pamięć na zapas dla 88 klawiszy
 
-        // --- ZMIENNE DO TRYBU SIATKI (WIREFRAME) ---
+        // zmienna trybu siatki
         bool isWireframeMode = false;
         bool rKeyPressed = false;
 
@@ -442,7 +419,6 @@ int main()
             time_second += deltaTime;
             frames++;
 
-            // Sekunda
             if (time_second >= 1.0f)
             {
                 // Wypisanie klatek na sekunde
@@ -454,7 +430,7 @@ int main()
             }
             lastFrameTime = currentFrameTime;
 
-            // --- OBSŁUGA ROZGLĄDANIA SIĘ (MYSZKA) ---
+            // Rozgladanie sie
             double mouseX, mouseY;
             window.getCursorPos(mouseX, mouseY);
 
@@ -467,26 +443,25 @@ int main()
             }
 
             float xoffset = mouseX - lastX;
-            float yoffset = lastY - mouseY; // Odwrócone
+            float yoffset = lastY - mouseY; 
             lastX = mouseX;
             lastY = mouseY;
 
-            float sensitivity = 0.005f; // Czułość myszki (możesz zmienić, jeśli jest za szybka/wolna)
+            float sensitivity = 0.005f; // Czułość myszki 
             xoffset *= sensitivity;
             yoffset *= sensitivity;
 
             yaw += xoffset;
             pitch += yoffset;
 
-            // Zabezpieczenie przed "złamaniem karku" - nie pozwalamy spojrzeć wyżej niż pionowo w górę i dół
+            // Zabezpieczenie przed patrzeniem nienaturalnie
             if (pitch > 89.0f)
                 pitch = 89.0f;
             if (pitch < -89.0f)
                 pitch = -89.0f;
 
-            // OBLICZANIE NOWEGO WEKTORA FRONT
             glm::vec3 front;
-            // Magia trygonometrii - przeliczenie kątów Eulera na wektor kierunkowy 3D
+            //Przeliczenie kątów Eulera na wektor kierunkowy 
             front.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
             front.y = sin(glm::radians(pitch));
             front.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
@@ -502,81 +477,75 @@ int main()
             if (window.isKeyPressed(GLFW_KEY_DOWN))
                 angleY -= rotationSpeed * deltaTime;
 
-            // Obliczamy "płaski" wektor patrzenia (tylko na osiach X i Z)
+            // Obliczamy płaski wektor patrzenia
             glm::vec3 cameraFrontFlat = glm::normalize(glm::vec3(cameraFront.x, 0.0f, cameraFront.z));
             float currentSpeed = cameraSpeed * deltaTime;
 
-            // Chodzenie do przodu i do tyłu po PŁASKIM terenie
+            // Chodzenie do przodu i do tyłu 
             if (window.isKeyPressed(GLFW_KEY_W))
                 cameraPos += currentSpeed * cameraFrontFlat;
             if (window.isKeyPressed(GLFW_KEY_S))
-                cameraPos -= currentSpeed * cameraFrontFlat;
-
-            // Klawisze A i D są już naturalnie płaskie, bo używają iloczynu wektorowego (cross) z osią pionową Y
+                cameraPos -= currentSpeed * cameraFrontFlat
             if (window.isKeyPressed(GLFW_KEY_A))
                 cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * currentSpeed;
             if (window.isKeyPressed(GLFW_KEY_D))
                 cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * currentSpeed;
 
-            float zoomSpeed = 30.0f * deltaTime; // Szybkość zoomowania (stopnie na sekundę)
+            float zoomSpeed = 30.0f * deltaTime; // Szybkość zoomowania
 
-            // Z - Przybliżanie (zmniejszamy kąt widzenia FOV)
+            // Przybliżanie
             if (window.isKeyPressed(GLFW_KEY_Z))
             {
                 fov -= zoomSpeed;
             }
-            // X - Oddalanie (zwiększamy kąt widzenia FOV)
+            // Oddalanie
             if (window.isKeyPressed(GLFW_KEY_X))
             {
                 fov += zoomSpeed;
             }
 
-            // Zabezpieczenia: nie pozwalamy odwrócić ekranu na lewą stronę (FOV < 1)
-            // i nie pozwalamy na zbyt duże zniekształcenie "rybie oko" (FOV > 45)
+            //Zabezpieczenia przed zjawiskiem rybiego oka
             if (fov < 1.0f)
                 fov = 1.0f;
             if (fov > 45.0f)
                 fov = 45.0f;
 
-            // OBLICZAMY NOWĄ MACIERZ PROJEKCJI CO KLATKĘ
+            // Macierz korelacji
             glm::mat4 P = glm::perspective(glm::radians(fov), 1200.0f / 800.0f, 0.1f, 100.0f);
 
-            // Czyszczenie tła (Ciemny grafitowy)
+            // Czyszczenie tła 
             glClearColor(0.15f, 0.15f, 0.15f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-            // Aktywacja naszego shadera
+            // Aktywacja shadera
             myShader.use();
 
             // pozycję kamery
-            // 1. OBLICZAMY NOWĄ MACIERZ WIDOKU (KAMERY)
-            // lookAt bierze: pozycję kamery, punkt w który patrzymy (pozycja + kierunek), oraz górę
+            // Macierz widoku
             glm::mat4 V = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
 
-            // Kolor obiektu wczytana grafika
-            // myShader.setVec3("objectColor", glm::vec3(0.25f, 0.15f, 0.08f));
+            
 
-            // USTAWIENIA ŚWIATŁA 1 (Kierunkowe - chłodne)
+            // Switalo 1 kierunkowe chlodne
             // Wektor kierunku - świeci z góry, z prawej, lekko z tyłu
             myShader.setVec3("dirLightDir", glm::vec3(-0.2f, -1.0f, -0.3f));
             myShader.setVec3("dirLightColor", glm::vec3(0.4f, 0.4f, 0.5f)); // Chłodny błękit/szarość
 
-            // USTAWIENIA ŚWIATŁA 2 (Punktowe - ciepła lampka nad klawiaturą)
-            // Przesuwamy lampkę nad klawisze (X = 0.0), wyżej (Y = 3.0) i odsuwamy mocno od kartki w stronę gracza (Z = 4.0)
+            // Swiatlo 2 punktowe lampka
+            // Przesuwamy lampkę nad klawisze 
             myShader.setVec3("pointLightPos", glm::vec3(0.0f, 3.0f, 4.0f));
-            
-            // Lekko przyciemniamy "kulę ognia", by dawała bardziej miękkie, klimatyczne światło
+            // Lekko przyciemniamy 
             myShader.setVec3("pointLightColor", glm::vec3(0.8f, 0.6f, 0.3f));
 
-            // Tworzenie macierzy Modelu (M)
+            // Tworzenie macierzy Modelu 
             glm::mat4 M = glm::mat4(1.0f);
             M = glm::translate(M, glm::vec3(0.0f, -1.0f, 0.0f));
             M = glm::rotate(M, angleX, glm::vec3(0.0f, 1.0f, 0.0f));
             M = glm::rotate(M, angleY, glm::vec3(1.0f, 0.0f, 0.0f));
             M = glm::rotate(M, glm::radians(-90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-            M = glm::scale(M, glm::vec3(0.01f)); // Skalowanie ze wzgledu na duzy plik .obj
+            M = glm::scale(M, glm::vec3(0.01f)); 
 
-            // --- PRZEŁĄCZNIK PIANOLI (Klawisz 'P') ---
+            // Przelacznik pianoli
             if (window.isKeyPressed(GLFW_KEY_P))
             {
                 if (!pKeyPressed)
@@ -584,7 +553,7 @@ int main()
                     pKeyPressed = true;
                     if (!isAutoPlaying)
                     {
-                        // START PIANOLI
+                        
                         isAutoPlaying = true;
                         playbackTime = 0.0f; // Zerujemy czas
                         // Resetujemy stan wszystkich nut przed każdym odtworzeniem
@@ -597,7 +566,7 @@ int main()
                     }
                     else
                     {
-                        // RĘCZNE ZATRZYMANIE PIANOLI
+                        // Reczne zatrzymanie
                         isAutoPlaying = false;
                         std::cout << "Pianola: STOP!\n";
                     }
@@ -608,7 +577,7 @@ int main()
                 pKeyPressed = false;
             }
 
-            // --- ANIMACJA I DŹWIĘK KLAWISZY ---
+            // Animacji i dzwiek klawiszy
             localTransforms.clear();
             float keyPressDepth = -0.5f;
 
@@ -616,9 +585,8 @@ int main()
             {
                 // ==========================================
                 // TRYB AUTOMATYCZNY (PIANOLA GRA Z PLIKU)
-                // ==========================================
-                playbackTime += deltaTime;
-                bool allFinished = true; // Sprawdzamy, czy utwór dobiegł końca
+                
+                plaTryb recznywór dobiegł końca
 
                 for (auto &note : song)
                 {
@@ -669,9 +637,9 @@ int main()
             }
             else
             {
-                // ==========================================
-                // TRYB RĘCZNY (TY GRASZ NA KLAWIATURZE)
-                // ==========================================
+                
+                // Tryb reczny
+            
                 for (auto &key : keys)
                 {
                     if (window.isKeyPressed(key.keyCode))
@@ -679,7 +647,7 @@ int main()
                         // Ugięcie klawisza na ekranie
                         localTransforms[key.meshName] = glm::translate(glm::mat4(1.0f), glm::vec3(-keyPressDepth, 0.0f, 0.0f));
 
-                        // Zagraj tylko w momencie pierwszego wciśnięcia
+                        // Klawisz gra w momencie 1 klikniecia
                         if (!key.isPressed)
                         {
                             if (soundSystemWorking && key.sound)
@@ -691,46 +659,45 @@ int main()
                     }
                     else
                     {
-                        // Klawisz odskakuje (zdejmujemy blokadę dźwięku)
+                        // Klawisz odskakuje 
                         key.isPressed = false;
                     }
                 }
             }
-            // Animacja spacji (pedała)
+            // Animacja spacji pedała
             if (window.isKeyPressed(GLFW_KEY_SPACE))
             {
                 glm::mat4 pedalTransform = glm::mat4(1.0f);
-                // Pedał zazwyczaj obraca się lekko w dół, więc dodajemy obrót na osi X
                 pedalTransform = glm::translate(pedalTransform, glm::vec3(0.0f, -0.5f, 0.0f));
                 pedalTransform = glm::rotate(pedalTransform, glm::radians(-5.0f), glm::vec3(1.0f, 0.0f, 0.0f));
                 localTransforms["pedal"] = pedalTransform;
             }
 
-            // --- OBSŁUGA OTWIERANIA KLAPY (Klawisz 'O') ---
+            // Otwieranie klapy
             if (window.isKeyPressed(GLFW_KEY_O))
             {
                 if (!oKeyPressed)
                 {
-                    isPianoOpen = !isPianoOpen; // Zmieniamy stan na przeciwny
-                    oKeyPressed = true;         // Blokujemy do czasu puszczenia klawisza
+                    isPianoOpen = !isPianoOpen; 
+                    oKeyPressed = true;         
                 }
             }
             else
             {
-                oKeyPressed = false; // Klawisz puszczony, zdejmujemy blokadę
+                oKeyPressed = false; 
             }
-            // --- OBSŁUGA TRYBU ROBOCZEGO (Klawisz 'R') ---
+            // Tryb roboczy siatka wire
             if (window.isKeyPressed(GLFW_KEY_R))
             {
                 if (!rKeyPressed)
                 {
-                    isWireframeMode = !isWireframeMode; // Zmieniamy stan na przeciwny
-                    rKeyPressed = true;                 // Blokujemy, żeby nie migotało
+                    isWireframeMode = !isWireframeMode; 
+                    rKeyPressed = true;                 
                 }
             }
             else
             {
-                rKeyPressed = false; // Zdejmujemy blokadę po puszczeniu klawisza
+                rKeyPressed = false;
             }
 
             // Płynna zmiana kąta na podstawie stanu
@@ -747,36 +714,34 @@ int main()
                     currentLidAngle = 0.0f;
             }
 
-            // --- ANIMACJA KLAPY (NAPRAWIONY PUNKT OBROTU) ---
+            // Animacja klapy
             if (currentLidAngle > 0.0f)
             {
                 glm::mat4 lidTransform = glm::mat4(1.0f);
 
-                // 1. Definiujemy wektor przesunięcia DO zawiasów (tył klapy).
+                // Definiujemy wektor przesunięcia do zawiasów 
                 glm::vec3 pivotOffset = glm::vec3(0.0f, 76.0f, -120.0f);
-                // Operacja 3: Przesuwamy z powrotem na obudowę (translacja dodatnia)
+                // Przesuwamy z powrotem na obudowę
                 lidTransform = glm::translate(lidTransform, -pivotOffset);
 
-                // Operacja 2: Obrót (deska obraca się idealnie wokół krawędzi w 0,0,0)
+                // Obrót 
                 lidTransform = glm::rotate(lidTransform, glm::radians(currentLidAngle), glm::vec3(1.0f, 0.0f, 0.0f));
 
-                // Operacja 1: Przesuwamy krawędź zawiasu do środka świata (translacja ujemna)
+                // Przesuwamy krawędź zawiasu do środka świata 
                 lidTransform = glm::translate(lidTransform, pivotOffset);
 
-                // Przekazujemy do mapy (nazwa 'pianoTop' z Twojego logu)
+                // Przekazujemy do mapy nazwe z logow
                 localTransforms["pianoTop"] = lidTransform;
             }
 
             // Przesłanie macierzy do shadera
             myShader.setMat4("V", V);
-            myShader.setVec3("viewPos", cameraPos); // Bardzo ważne dla oświetlenia Blinna-Phonga!
-            myShader.setMat4("P", P);               // P wysyłamy jak zwykle
+            myShader.setVec3("viewPos", cameraPos); 
+            myShader.setMat4("P", P);               
 
-            // ==========================================
-            // RYSOWANIE FORTEPIANU
-            // ==========================================
+            //Rysowanie fortepianu
             
-            // Jeśli tryb roboczy jest włączony, każemy OpenGL rysować same linie
+            // Tryb roboczy
             if (isWireframeMode) 
             {
                 glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -785,39 +750,35 @@ int main()
             // Rysowanie modelu
             myModel.Draw(myShader, M, localTransforms);
 
-            // BARDZO WAŻNE: Zawsze przywracamy tryb wypełnienia (FILL) zaraz po narysowaniu fortepianu!
-            // Dzięki temu nasza tablica i nuty z tyłu nadal będą rysowane jako pełne prostokąty, a nie siatki.
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-           // ==========================================
-            // RYSOWANIE KARTKI (PAPIERU) ZA FORTEPIANEM
-            // ==========================================
+           //Rysowanie kartki papieru
 
-            // 1. Definiujemy "bazę" dla położenia i obrotu kartki.
-            // Dzięki temu nuty będą mogły "odziedziczyć" ten sam kąt i pozycję!
+            // Definiujemy bazę dla położenia i obrotu kartki.
             glm::mat4 paperBaseM = glm::mat4(1.0f);
             paperBaseM = glm::translate(paperBaseM, glm::vec3(-2.0f, 1.5f, 0.0f)); // Twoja znaleziona pozycja
             paperBaseM = glm::rotate(paperBaseM, glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f)); // Twój obrót o 90 stopni
 
-            // 2. Rysujemy wielką, białą tablicę
+            //Rysujemy białą tablicę
             glm::mat4 boardM = paperBaseM;
-            boardM = glm::scale(boardM, glm::vec3(5.0f, 2.0f, 1.0f)); // Szerokość: 5.0, Wysokość: 2.0, Z płaskie
+            boardM = glm::scale(boardM, glm::vec3(5.0f, 2.0f, 1.0f)); 
 
             myShader.setMat4("M", boardM);
 
             glActiveTexture(GL_TEXTURE0);
-            glBindTexture(GL_TEXTURE_2D, whiteTexture); // Bindujemy "papier"
+            glBindTexture(GL_TEXTURE_2D, whiteTexture); 
 
             glBindVertexArray(quadVAO);
             glDrawArrays(GL_TRIANGLES, 0, 6);
 
-            // ==========================================
-            // WIZUALIZACJA AKTUALNIE GRANYCH NUT
-            // ==========================================
+            
+            
+            
+            // Wizualizacja granych nut
 
-            glBindTexture(GL_TEXTURE_2D, noteTexture); // Zmieniamy kolor pędzla na błękitny
+            glBindTexture(GL_TEXTURE_2D, noteTexture); // Zmieniamy kolor na błękitny
 
-            // A) Obsługa wizualizacji dla automatycznego odtwarzania (Pianola)
+            // Obsługa wizualizacji dla automatycznego odtwarzania 
             if (isAutoPlaying)
             {
                 for (auto &note : song)
@@ -839,15 +800,15 @@ int main()
                         {
                             float percent = (float)keyIdx / (keys.size() - 1);
                             
-                            // Szerokość kartki to 5.0, więc wyliczamy lokalną pozycję X od -2.5 (lewo) do 2.5 (prawo)
+                            
                             float localX = -2.5f + (percent * 5.0f);
 
-                            glm::mat4 noteM = paperBaseM; // Nuta dziedziczy pozycję i OBRÓT od kartki!
+                            glm::mat4 noteM = paperBaseM; // Nuta dziedziczy pozycję i obrot od kartki
                             
-                            // Przesuwamy nutę wzdłuż lokalnego X kartki, oraz tyci-tyci do przodu na osi Z (0.01f), 
-                            // aby nuta "leżała" na papierze i nie było tzw. Z-fightingu (migotania pikseli)
+                             
+                            // Przesuwamy troche do przodu aby uniknac problemu z-figtingu
                             noteM = glm::translate(noteM, glm::vec3(localX, 0.0f, 0.01f)); 
-                            noteM = glm::scale(noteM, glm::vec3(0.04f, 2.0f, 1.0f)); // 0.04f to szerokość paska nuty
+                            noteM = glm::scale(noteM, glm::vec3(0.04f, 2.0f, 1.0f)); 
 
                             myShader.setMat4("M", noteM);
                             glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -855,7 +816,7 @@ int main()
                     }
                 }
             }
-            // B) Obsługa wizualizacji dla ręcznego grania na klawiaturze
+            //Obsługa wizualizacji dla ręcznego grania na klawiaturze
             else
             {
                 for (size_t i = 0; i < keys.size(); i++)

@@ -6,7 +6,7 @@
 #include <stdexcept>
 
 Shader::Shader(const std::string& vertexPath, const std::string& fragmentPath) {
-    // 1. Pobranie kodu źródłowego shaderów z plików
+    // Pobranie kodu źródłowego shaderów z plików
     std::string vertexCode;
     std::string fragmentCode;
     std::ifstream vShaderFile;
@@ -37,7 +37,7 @@ Shader::Shader(const std::string& vertexPath, const std::string& fragmentPath) {
     const char* vShaderCode = vertexCode.c_str();
     const char* fShaderCode = fragmentCode.c_str();
 
-    // 2. Kompilacja shaderów
+    // Kompilacja shaderów
     GLuint vertex, fragment;
 
     // Vertex Shader
@@ -52,14 +52,14 @@ Shader::Shader(const std::string& vertexPath, const std::string& fragmentPath) {
     glCompileShader(fragment);
     checkCompileErrors(fragment, "FRAGMENT");
 
-    // 3. Linkowanie programu
+    // Linkowanie programu
     programID = glCreateProgram();
     glAttachShader(programID, vertex);
     glAttachShader(programID, fragment);
     glLinkProgram(programID);
     checkCompileErrors(programID, "PROGRAM");
 
-    // 4. Sprzątanie (RAII dla samych obiektów shaderów - są już w programie, więc usuwamy je)
+    // Sprzątanie 
     glDeleteShader(vertex);
     glDeleteShader(fragment);
 }
@@ -73,19 +73,16 @@ void Shader::use() const {
     glUseProgram(programID);
 }
 
-// --- Implementacja funkcji do Uniformów ---
+// Uniformy
 
 GLint Shader::getUniformLocation(const std::string& name) const {
-    // Sprawdzamy, czy lokalizacja jest już w naszym cache
+    // Sprawdzamy czy lokalizacja jest już w naszym cache
     if (uniformLocationCache.find(name) != uniformLocationCache.end()) {
         return uniformLocationCache[name];
     }
 
-    // Jeśli nie, pytamy OpenGL
     GLint location = glGetUniformLocation(programID, name.c_str());
     if (location == -1) {
-        // Nie rzucamy wyjątku, bo czasem uniform zostaje "wycięty" przez kompilator GLSL 
-        // jeśli nie jest używany (tzw. dead code elimination), ale warto o tym ostrzec
         std::cerr << "OSTRZEZENIE::SHADER::Nie znaleziono uniforma o nazwie: " << name << "\n";
     }
     
@@ -110,7 +107,7 @@ void Shader::setVec3(const std::string& name, const glm::vec3& vec) const {
     glUniform3fv(getUniformLocation(name), 1, &vec[0]);
 }
 
-// --- Debugowanie błędów kompilacji/linkowania OpenGL ---
+// Debugowanie błędów kompilacji/linkowania
 
 void Shader::checkCompileErrors(GLuint shader, const std::string& type) const {
     GLint success;
